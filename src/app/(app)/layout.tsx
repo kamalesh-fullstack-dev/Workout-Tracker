@@ -1,0 +1,30 @@
+import { auth } from "@/lib/auth";
+import { signOutAction } from "@/actions/auth";
+import { Button } from "@/components/ui/button";
+
+export default async function AppLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const session = await auth();
+
+  return (
+    <div className="flex flex-1 flex-col">
+      <header className="border-border/60 flex items-center justify-between border-b px-4 py-3 sm:px-6">
+        <span className="font-semibold tracking-tight">Iron Log</span>
+        <div className="flex items-center gap-3">
+          <span className="text-muted-foreground hidden text-sm sm:inline">
+            {session?.user?.email}
+          </span>
+          <form action={signOutAction}>
+            <Button type="submit" variant="outline" size="sm">
+              Sign out
+            </Button>
+          </form>
+        </div>
+      </header>
+      <main className="flex flex-1 flex-col px-4 py-6 sm:px-6">{children}</main>
+    </div>
+  );
+}

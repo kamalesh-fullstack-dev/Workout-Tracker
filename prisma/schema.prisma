@@ -1,0 +1,248 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UnitPreference {
+  KG
+  LB
+}
+
+enum ExerciseCategory {
+  STRENGTH
+  CARDIO
+  MOBILITY
+  PLYOMETRIC
+  OTHER
+}
+
+enum MuscleGroup {
+  CHEST
+  BACK
+  SHOULDERS
+  BICEPS
+  TRICEPS
+  FOREARMS
+  QUADS
+  HAMSTRINGS
+  GLUTES
+  CALVES
+  CORE
+  FULL_BODY
+  CARDIO
+}
+
+enum Equipment {
+  BARBELL
+  DUMBBELL
+  MACHINE
+  CABLE
+  BODYWEIGHT
+  KETTLEBELL
+  BAND
+  OTHER
+}
+
+enum TrackingType {
+  WEIGHT_REPS
+  BODYWEIGHT_REPS
+  TIME
+  DISTANCE
+}
+
+enum PRType {
+  MAX_WEIGHT
+  MAX_REPS
+  MAX_E1RM
+  MAX_VOLUME
+}
+
+enum MeasurementType {
+  WAIST
+  CHEST
+  HIPS
+  ARM
+  THIGH
+  NECK
+  CALF
+}
+
+model User {
+  id             String         @id @default(cuid())
+  email          String         @unique
+  passwordHash   String
+  name           String?
+  unitPreference UnitPreference @default(KG)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  exercises       Exercise[]        @relation("UserExercises")
+  routines        RoutineTemplate[]
+  workoutSessions WorkoutSession[]
+  bodyMetrics     BodyMetricEntry[]
+  measurements    BodyMeasurement[]
+  personalRecords PersonalRecord[]
+}
+
+model Exercise {
+  id           String           @id @default(cuid())
+  name         String
+  category     ExerciseCategory @default(STRENGTH)
+  muscleGroups MuscleGroup[]
+  equipment    Equipment        @default(OTHER)
+  trackingType TrackingType     @default(WEIGHT_REPS)
+  isCustom     Boolean          @default(false)
+  createdById  String?
+  createdBy    User?            @relation("UserExercises", fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt    DateTime         @default(now())
+
+  routineExercises RoutineExercise[]
+  sessionExercises SessionExercise[]
+  personalRecords  PersonalRecord[]
+
+  @@index([name])
+  @@index([category])
+  @@index([createdById])
+}
+
+model RoutineTemplate {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  exercises RoutineExercise[]
+  sessions  WorkoutSession[]
+
+  @@index([userId])
+}
+
+model RoutineExercise {
+  id          String          @id @default(cuid())
+  routineId   String
+  routine     RoutineTemplate @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  exerciseId  String
+  exercise    Exercise        @relation(fields: [exerciseId], references: [id])
+  order       Int
+  restSeconds Int?
+
+  targetSets RoutineExerciseSet[]
+
+  @@index([routineId])
+  @@index([exerciseId])
+}
+
+model RoutineExerciseSet {
+  id                String          @id @default(cuid())
+  routineExerciseId String
+  routineExercise   RoutineExercise @relation(fields: [routineExerciseId], references: [id], onDelete: Cascade)
+  setNumber         Int
+  targetReps        Int?
+  targetWeightKg    Decimal?        @db.Decimal(6, 2)
+  isWarmup          Boolean         @default(false)
+
+  @@index([routineExerciseId])
+}
+
+model WorkoutSession {
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routineId   String?
+  routine     RoutineTemplate? @relation(fields: [routineId], references: [id], onDelete: SetNull)
+  name        String?
+  startedAt   DateTime         @default(now())
+  completedAt DateTime?
+  notes       String?
+
+  exercises SessionExercise[]
+
+  @@index([userId, startedAt])
+  @@index([routineId])
+}
+
+model SessionExercise {
+  id               String         @id @default(cuid())
+  workoutSessionId String
+  workoutSession   WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+  exerciseId       String
+  exercise         Exercise       @relation(fields: [exerciseId], references: [id])
+  order            Int
+  restSeconds      Int?
+  notes            String?
+
+  sets SetEntry[]
+
+  @@index([workoutSessionId])
+  @@index([exerciseId])
+}
+
+model SetEntry {
+  id                String          @id @default(cuid())
+  sessionExerciseId String
+  sessionExercise   SessionExercise @relation(fields: [sessionExerciseId], references: [id], onDelete: Cascade)
+
+  // Denormalized from sessionExercise -> workoutSession / sessionExercise -> exercise.
+  // The PR dashboard and suggestion engine both need "all sets for (user, exercise)
+  // ordered by time" as their hottest query; this avoids a 3-table join on every load.
+  userId     String
+  exerciseId String
+
+  setNumber    Int
+  weightKg     Decimal   @db.Decimal(6, 2)
+  reps         Int
+  rpe          Decimal?  @db.Decimal(3, 1)
+  isWarmup     Boolean   @default(false)
+  isCompleted  Boolean   @default(false)
+  completedAt  DateTime?
+  estimated1RM Decimal?  @db.Decimal(6, 2)
+  isPR         Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, exerciseId, completedAt])
+  @@index([sessionExerciseId])
+}
+
+model PersonalRecord {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+  type       PRType
+  value      Decimal  @db.Decimal(8, 2)
+  setEntryId String?
+  achievedAt DateTime
+
+  @@unique([userId, exerciseId, type])
+}
+
+model BodyMetricEntry {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date     DateTime @db.Date
+  weightKg Decimal? @db.Decimal(6, 2)
+  note     String?
+
+  @@unique([userId, date])
+}
+
+model BodyMeasurement {
+  id      String          @id @default(cuid())
+  userId  String
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date    DateTime        @db.Date
+  type    MeasurementType
+  valueCm Decimal         @db.Decimal(6, 2)
+
+  @@index([userId, type, date])
+}
