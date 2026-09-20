@@ -3,6 +3,7 @@ import { requireUser } from "@/actions/auth";
 import { db } from "@/lib/db";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { DeleteWorkoutButton } from "@/components/workout/delete-workout-button";
 
 export default async function HistoryPage() {
   const user = await requireUser();
@@ -51,29 +52,32 @@ export default async function HistoryPage() {
           );
 
           return (
-            <Link key={session.id} href={`/workout/${session.id}`}>
-              <Card className="gap-2 p-4 transition-colors hover:bg-muted/50">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">
-                    {new Date(session.startedAt).toLocaleDateString(undefined, {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                  <Badge variant="outline">
-                    {session.exercises.length} exercise
-                    {session.exercises.length === 1 ? "" : "s"}
-                  </Badge>
-                </div>
-                <p className="text-muted-foreground text-sm">
-                  {session.exercises.map((e) => e.exercise.name).join(", ")}
-                </p>
-                <p className="text-muted-foreground text-xs">
-                  {setCount} sets · {Math.round(volumeKg).toLocaleString()} kg volume
-                </p>
-              </Card>
-            </Link>
+            <Card key={session.id} className="gap-2 p-4">
+              <div className="flex items-start justify-between gap-2">
+                <Link href={`/workout/${session.id}`} className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">
+                      {new Date(session.startedAt).toLocaleDateString(undefined, {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
+                    <Badge variant="outline">
+                      {session.exercises.length} exercise
+                      {session.exercises.length === 1 ? "" : "s"}
+                    </Badge>
+                  </div>
+                  <p className="text-muted-foreground text-sm">
+                    {session.exercises.map((e) => e.exercise.name).join(", ")}
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    {setCount} sets · {Math.round(volumeKg).toLocaleString()} kg volume
+                  </p>
+                </Link>
+                <DeleteWorkoutButton sessionId={session.id} />
+              </div>
+            </Card>
           );
         })}
       </div>

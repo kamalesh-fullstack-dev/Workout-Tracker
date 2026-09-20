@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/actions/auth";
 import { db } from "@/lib/db";
+import { estimatedOneRepMax } from "@/lib/units";
+import { getSuggestion, type SetHistoryEntry } from "@/lib/suggestions";
+import type { Equipment } from "@/lib/units";
 import {
   logSetSchema,
   updateSetSchema,
@@ -12,11 +15,6 @@ import {
 } from "@/lib/validations/workout";
 
 type ActionResult = { error: string } | { success: true };
-
-function estimatedOneRepMax(weightKg: number, reps: number) {
-  if (reps <= 1) return weightKg;
-  return weightKg * (1 + reps / 30);
-}
 
 export async function startWorkoutAction() {
   const user = await requireUser();
@@ -56,10 +54,7 @@ export async function addExerciseToSessionAction(
   exerciseId: string
 ): Promise<ActionResult> {
   const user = await requireUser();
-  const session = await assertSessionOwnership(sessionId, user.id);
-  if (session.completedAt) {
-    return { error: "This workout is already finished." };
-  }
+  await assertSessionOwnership(sessionId, user.id);
 
   const exercise = await db.exercise.findUnique({
     where: { id: exerciseId },
@@ -94,9 +89,6 @@ export async function removeExerciseFromSessionAction(
   if (!sessionExercise || sessionExercise.workoutSession.userId !== user.id) {
     return { error: "Exercise not found in this workout." };
   }
-  if (sessionExercise.workoutSession.completedAt) {
-    return { error: "This workout is already finished." };
-  }
 
   await db.sessionExercise.delete({ where: { id: sessionExerciseId } });
 
@@ -117,9 +109,6 @@ export async function logSetAction(input: LogSetInput): Promise<ActionResult> {
   );
   if (!sessionExercise || sessionExercise.workoutSession.userId !== user.id) {
     return { error: "Exercise not found in this workout." };
-  }
-  if (sessionExercise.workoutSession.completedAt) {
-    return { error: "This workout is already finished." };
   }
 
   const setCount = await db.setEntry.count({
@@ -165,16 +154,11 @@ export async function updateSetAction(
     where: { id: parsed.data.setId },
     select: {
       userId: true,
-      sessionExercise: {
-        select: { workoutSessionId: true, workoutSession: { select: { completedAt: true } } },
-      },
+      sessionExercise: { select: { workoutSessionId: true } },
     },
   });
   if (!set || set.userId !== user.id) {
     return { error: "Set not found." };
-  }
-  if (set.sessionExercise.workoutSession.completedAt) {
-    return { error: "This workout is already finished." };
   }
 
   await db.setEntry.update({
@@ -198,16 +182,11 @@ export async function deleteSetAction(setId: string): Promise<ActionResult> {
     where: { id: setId },
     select: {
       userId: true,
-      sessionExercise: {
-        select: { workoutSessionId: true, workoutSession: { select: { completedAt: true } } },
-      },
+      sessionExercise: { select: { workoutSessionId: true } },
     },
   });
   if (!set || set.userId !== user.id) {
     return { error: "Set not found." };
-  }
-  if (set.sessionExercise.workoutSession.completedAt) {
-    return { error: "This workout is already finished." };
   }
 
   await db.setEntry.delete({ where: { id: setId } });
@@ -229,6 +208,19 @@ export async function finishWorkoutAction(sessionId: string) {
   redirect(`/history`);
 }
 
+export async function deleteWorkoutSessionAction(
+  sessionId: string
+): Promise<ActionResult> {
+  const user = await requireUser();
+  await assertSessionOwnership(sessionId, user.id);
+
+  await db.workoutSession.delete({ where: { id: sessionId } });
+
+  revalidatePath("/history");
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
 export async function searchExercisesForPickerAction(query: string) {
   const user = await requireUser();
 
@@ -240,5 +232,51 @@ export async function searchExercisesForPickerAction(query: string) {
     orderBy: { name: "asc" },
     take: 25,
     select: { id: true, name: true, equipment: true },
+  });
+}
+
+/**
+ * Fetches a weight/reps suggestion for one exercise. Server-only helper (not
+ * an action) so it can be called in parallel with Promise.all when rendering
+ * the workout page, with zero added round-trip latency.
+ */
+export async function fetchSuggestionForExercise(
+  userId: string,
+  exerciseId: string,
+  routineTarget?: { reps: number | null; weightKg: number | null }
+) {
+  const exercise = await db.exercise.findUniqueOrThrow({
+    where: { id: exerciseId },
+    select: { equipment: true },
+  });
+
+  const history = await db.setEntry.findMany({
+    where: { userId, exerciseId },
+    orderBy: { completedAt: "desc" },
+    take: 60,
+    select: {
+      sessionExerciseId: true,
+      weightKg: true,
+      reps: true,
+      rpe: true,
+      isWarmup: true,
+      completedAt: true,
+    },
+  });
+
+  const historyEntries: SetHistoryEntry[] = history
+    .filter((s) => s.completedAt != null)
+    .map((s) => ({
+      sessionExerciseId: s.sessionExerciseId,
+      weightKg: Number(s.weightKg),
+      reps: s.reps,
+      rpe: s.rpe ? Number(s.rpe) : null,
+      isWarmup: s.isWarmup,
+      completedAt: s.completedAt as Date,
+    }));
+
+  return getSuggestion(historyEntries, {
+    equipment: exercise.equipment as Equipment,
+    routineTarget,
   });
 }

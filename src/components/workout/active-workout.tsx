@@ -2,6 +2,7 @@
 
 import { useOptimistic, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { toast } from "sonner";
 import {
   addExerciseToSessionAction,
@@ -9,7 +10,9 @@ import {
   finishWorkoutAction,
   logSetAction,
   removeExerciseFromSessionAction,
+  updateSetAction,
 } from "@/actions/workouts";
+import type { Suggestion } from "@/lib/suggestions";
 import { Button } from "@/components/ui/button";
 import { ExercisePickerDialog } from "@/components/workout/exercise-picker-dialog";
 import { ExerciseBlock, type SetItem } from "@/components/workout/exercise-block";
@@ -23,6 +26,7 @@ export type ExerciseBlockData = {
   exerciseName: string;
   restSeconds: number | null;
   sets: SetItem[];
+  suggestion?: Suggestion | null;
   pending?: boolean;
 };
 
@@ -30,7 +34,12 @@ type OptimisticAction =
   | { type: "add-exercise"; exercise: ExerciseBlockData }
   | { type: "remove-exercise"; sessionExerciseId: string }
   | { type: "add-set"; sessionExerciseId: string; set: SetItem }
-  | { type: "remove-set"; setId: string };
+  | { type: "remove-set"; setId: string }
+  | {
+      type: "update-set";
+      setId: string;
+      data: { weightKg: number; reps: number; rpe: number | null };
+    };
 
 function reducer(
   state: ExerciseBlockData[],
@@ -52,6 +61,13 @@ function reducer(
         ...e,
         sets: e.sets.filter((s) => s.id !== action.setId),
       }));
+    case "update-set":
+      return state.map((e) => ({
+        ...e,
+        sets: e.sets.map((s) =>
+          s.id === action.setId ? { ...s, ...action.data, pending: true } : s
+        ),
+      }));
     default:
       return state;
   }
@@ -60,9 +76,11 @@ function reducer(
 export function ActiveWorkout({
   sessionId,
   initialExercises,
+  isCompleted = false,
 }: {
   sessionId: string;
   initialExercises: ExerciseBlockData[];
+  isCompleted?: boolean;
 }) {
   const router = useRouter();
   const [exercises, applyOptimistic] = useOptimistic(
@@ -85,6 +103,7 @@ export function ActiveWorkout({
           exerciseName: exercise.name,
           restSeconds: null,
           sets: [],
+          suggestion: null,
           pending: true,
         },
       });
@@ -129,7 +148,7 @@ export function ActiveWorkout({
       router.refresh();
     });
 
-    if (!data.isWarmup) {
+    if (!data.isWarmup && !isCompleted) {
       restTimerRef.current?.start(exercise?.restSeconds ?? DEFAULT_REST_SECONDS);
     }
   }
@@ -138,6 +157,18 @@ export function ActiveWorkout({
     startTransition(async () => {
       applyOptimistic({ type: "remove-set", setId });
       const result = await deleteSetAction(setId);
+      if ("error" in result) toast.error(result.error);
+      router.refresh();
+    });
+  }
+
+  function handleUpdateSet(
+    setId: string,
+    data: { weightKg: number; reps: number; rpe: number | null }
+  ) {
+    startTransition(async () => {
+      applyOptimistic({ type: "update-set", setId, data });
+      const result = await updateSetAction({ setId, ...data });
       if ("error" in result) toast.error(result.error);
       router.refresh();
     });
@@ -157,9 +188,11 @@ export function ActiveWorkout({
           key={exercise.id}
           exerciseName={exercise.exerciseName}
           sets={exercise.sets}
+          suggestion={exercise.suggestion}
           disabled={isPending || exercise.id.startsWith("temp-")}
           onLogSet={(data) => handleLogSet(exercise.id, data)}
           onDeleteSet={handleDeleteSet}
+          onUpdateSet={handleUpdateSet}
           onRemoveExercise={() => handleRemoveExercise(exercise.id)}
         />
       ))}
@@ -168,7 +201,7 @@ export function ActiveWorkout({
         onSelect={(exercise) => handleAddExercise(exercise)}
       />
 
-      <RestTimer ref={restTimerRef} />
+      {!isCompleted && <RestTimer ref={restTimerRef} />}
 
       <div className="bg-card/80 border-border fixed inset-x-0 bottom-0 z-20 border-t p-4 shadow-2xl backdrop-blur-xl">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
@@ -176,14 +209,23 @@ export function ActiveWorkout({
             {exercises.length} exercise{exercises.length === 1 ? "" : "s"} ·{" "}
             {totalSets} set{totalSets === 1 ? "" : "s"}
           </span>
-          <Button
-            size="lg"
-            className="h-12"
-            disabled={totalSets === 0 || isFinishing}
-            onClick={handleFinish}
-          >
-            {isFinishing ? "Finishing..." : "Finish workout"}
-          </Button>
+          {isCompleted ? (
+            <Button
+              size="lg"
+              className="h-12"
+              nativeButton={false}
+              render={<Link href="/history">Done</Link>}
+            />
+          ) : (
+            <Button
+              size="lg"
+              className="h-12"
+              disabled={totalSets === 0 || isFinishing}
+              onClick={handleFinish}
+            >
+              {isFinishing ? "Finishing..." : "Finish workout"}
+            </Button>
+          )}
         </div>
       </div>
     </div>
