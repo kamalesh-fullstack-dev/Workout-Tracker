@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { X } from "lucide-react";
 import { deleteExerciseAction } from "@/actions/exercises";
@@ -58,7 +59,12 @@ export function ExerciseList({
         return (
           <Card key={exercise.id} className="gap-2 p-4">
             <div className="flex items-start justify-between gap-2">
-              <span className="font-medium">{exercise.name}</span>
+              <Link
+                href={`/exercises/${exercise.id}`}
+                className="min-w-0 flex-1 font-medium hover:underline"
+              >
+                {exercise.name}
+              </Link>
               {canDelete && (
                 <Button
                   variant="ghost"

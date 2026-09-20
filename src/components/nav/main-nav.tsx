@@ -9,7 +9,9 @@ const NAV_LINKS = [
   { href: "/routines", label: "Routines" },
   { href: "/history", label: "History" },
   { href: "/prs", label: "PRs" },
+  { href: "/progress", label: "Progress" },
   { href: "/exercises", label: "Exercises" },
+  { href: "/body-metrics", label: "Body" },
 ];
 
 export function MainNav() {
