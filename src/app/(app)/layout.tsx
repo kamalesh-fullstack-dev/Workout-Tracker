@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { signOutAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { MainNav } from "@/components/nav/main-nav";
+import { MobileTabBar } from "@/components/nav/mobile-tab-bar";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function AppLayout({
@@ -30,7 +31,10 @@ export default async function AppLayout({
         </div>
         <MainNav />
       </header>
-      <main className="flex flex-1 flex-col px-4 py-6 sm:px-6">{children}</main>
+      <main className="flex flex-1 flex-col px-4 py-6 pb-24 sm:px-6 sm:pb-6">
+        {children}
+      </main>
+      <MobileTabBar />
     </div>
   );
 }
