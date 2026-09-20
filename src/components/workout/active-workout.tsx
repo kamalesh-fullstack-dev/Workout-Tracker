@@ -13,6 +13,7 @@ import {
   updateSetAction,
 } from "@/actions/workouts";
 import type { Suggestion } from "@/lib/suggestions";
+import { PR_TYPE_LABELS, type NewPR } from "@/lib/pr-types";
 import { Button } from "@/components/ui/button";
 import { ExercisePickerDialog } from "@/components/workout/exercise-picker-dialog";
 import { ExerciseBlock, type SetItem } from "@/components/workout/exercise-block";
@@ -93,6 +94,14 @@ export function ActiveWorkout({
 
   const totalSets = exercises.reduce((sum, e) => sum + e.sets.length, 0);
 
+  function showNewPRToast(newPRs: NewPR[]) {
+    if (newPRs.length === 0) return;
+    const summary = newPRs
+      .map((pr) => `${PR_TYPE_LABELS[pr.type]}: ${pr.value}`)
+      .join(" · ");
+    toast.success(`New PR! ${summary}`);
+  }
+
   function handleAddExercise(exercise: { id: string; name: string }) {
     startTransition(async () => {
       applyOptimistic({
@@ -144,7 +153,11 @@ export function ActiveWorkout({
         },
       });
       const result = await logSetAction({ sessionExerciseId, ...data });
-      if ("error" in result) toast.error(result.error);
+      if ("error" in result) {
+        toast.error(result.error);
+      } else {
+        showNewPRToast(result.newPRs);
+      }
       router.refresh();
     });
 
@@ -169,7 +182,11 @@ export function ActiveWorkout({
     startTransition(async () => {
       applyOptimistic({ type: "update-set", setId, data });
       const result = await updateSetAction({ setId, ...data });
-      if ("error" in result) toast.error(result.error);
+      if ("error" in result) {
+        toast.error(result.error);
+      } else {
+        showNewPRToast(result.newPRs);
+      }
       router.refresh();
     });
   }

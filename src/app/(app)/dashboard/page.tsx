@@ -1,9 +1,15 @@
 import Link from "next/link";
+import { Trophy } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { requireUser } from "@/actions/auth";
 import { db } from "@/lib/db";
+import { PR_TYPE_LABELS, type PRType } from "@/lib/pr-types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+
+function formatPRValue(type: PRType, value: number) {
+  return type === "MAX_REPS" ? `${value} reps` : `${value} kg`;
+}
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -22,6 +28,13 @@ export default async function DashboardPage() {
     include: {
       exercises: { select: { exercise: { select: { name: true } } } },
     },
+  });
+
+  const recentPRs = await db.personalRecord.findMany({
+    where: { userId: user.id },
+    orderBy: { achievedAt: "desc" },
+    take: 3,
+    include: { exercise: { select: { name: true } } },
   });
 
   return (
@@ -59,6 +72,32 @@ export default async function DashboardPage() {
           nativeButton={false}
           render={<Link href="/workout/start">Start workout</Link>}
         />
+      )}
+
+      {recentPRs.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium">Recent PRs</h2>
+            <Link href="/prs" className="text-muted-foreground text-xs underline underline-offset-4">
+              View all
+            </Link>
+          </div>
+          <div className="flex flex-col gap-2">
+            {recentPRs.map((pr) => (
+              <Card key={pr.id} className="flex-row items-center gap-3 p-3">
+                <Trophy className="text-primary size-4 shrink-0" />
+                <div className="flex-1 text-sm">
+                  <span className="font-medium">{pr.exercise.name}</span>
+                  <span className="text-muted-foreground">
+                    {" "}
+                    · {PR_TYPE_LABELS[pr.type as PRType]}:{" "}
+                    {formatPRValue(pr.type as PRType, Number(pr.value))}
+                  </span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
       )}
 
       <div className="flex flex-col gap-2">

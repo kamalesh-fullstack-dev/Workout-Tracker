@@ -137,10 +137,19 @@ const exercises: SeedExercise[] = [
 
   // Cardio
   { name: "Running", category: "CARDIO", muscleGroups: ["CARDIO"], equipment: "OTHER", trackingType: "DISTANCE" },
+  { name: "Treadmill Running", category: "CARDIO", muscleGroups: ["CARDIO"], equipment: "MACHINE", trackingType: "DISTANCE" },
+  { name: "Sprints", category: "CARDIO", muscleGroups: ["CARDIO", "QUADS", "HAMSTRINGS"], equipment: "OTHER", trackingType: "DISTANCE" },
+  { name: "Walking", category: "CARDIO", muscleGroups: ["CARDIO"], equipment: "OTHER", trackingType: "DISTANCE" },
+  { name: "Incline Treadmill Walk", category: "CARDIO", muscleGroups: ["CARDIO", "GLUTES"], equipment: "MACHINE", trackingType: "TIME" },
   { name: "Cycling", category: "CARDIO", muscleGroups: ["CARDIO"], equipment: "OTHER", trackingType: "DISTANCE" },
+  { name: "Stationary Bike", category: "CARDIO", muscleGroups: ["CARDIO", "QUADS"], equipment: "MACHINE", trackingType: "DISTANCE" },
+  { name: "Assault Bike", category: "CARDIO", muscleGroups: ["CARDIO", "FULL_BODY"], equipment: "MACHINE", trackingType: "TIME" },
   { name: "Rowing Machine", category: "CARDIO", muscleGroups: ["CARDIO", "BACK"], equipment: "MACHINE", trackingType: "DISTANCE" },
+  { name: "Ski Erg", category: "CARDIO", muscleGroups: ["CARDIO", "BACK", "SHOULDERS"], equipment: "MACHINE", trackingType: "DISTANCE" },
   { name: "Jump Rope", category: "CARDIO", muscleGroups: ["CARDIO"], equipment: "OTHER", trackingType: "TIME" },
   { name: "Stair Climber", category: "CARDIO", muscleGroups: ["CARDIO", "QUADS"], equipment: "MACHINE", trackingType: "TIME" },
+  { name: "Battle Ropes", category: "CARDIO", muscleGroups: ["CARDIO", "SHOULDERS", "CORE"], equipment: "OTHER", trackingType: "TIME" },
+  { name: "Shadow Boxing", category: "CARDIO", muscleGroups: ["CARDIO", "FULL_BODY"], equipment: "BODYWEIGHT", trackingType: "TIME" },
 
   // Mobility
   { name: "Cat-Cow Stretch", category: "MOBILITY", muscleGroups: ["BACK", "CORE"], equipment: "BODYWEIGHT", trackingType: "TIME" },

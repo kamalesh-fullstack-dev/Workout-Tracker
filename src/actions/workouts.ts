@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { estimatedOneRepMax } from "@/lib/units";
 import { getSuggestion, type SetHistoryEntry } from "@/lib/suggestions";
 import type { Equipment } from "@/lib/units";
+import { recomputeExercisePRs, type NewPR } from "@/lib/prs";
 import {
   logSetSchema,
   updateSetSchema,
@@ -15,6 +16,7 @@ import {
 } from "@/lib/validations/workout";
 
 type ActionResult = { error: string } | { success: true };
+type SetActionResult = { error: string } | { success: true; newPRs: NewPR[] };
 
 export async function startWorkoutAction() {
   const user = await requireUser();
@@ -43,6 +45,7 @@ async function getSessionIdForSessionExercise(sessionExerciseId: string) {
     where: { id: sessionExerciseId },
     select: {
       workoutSessionId: true,
+      exerciseId: true,
       workoutSession: { select: { userId: true, completedAt: true } },
     },
   });
@@ -91,12 +94,14 @@ export async function removeExerciseFromSessionAction(
   }
 
   await db.sessionExercise.delete({ where: { id: sessionExerciseId } });
+  await recomputeExercisePRs(user.id, sessionExercise.exerciseId);
 
   revalidatePath(`/workout/${sessionExercise.workoutSessionId}`);
+  revalidatePath("/prs");
   return { success: true };
 }
 
-export async function logSetAction(input: LogSetInput): Promise<ActionResult> {
+export async function logSetAction(input: LogSetInput): Promise<SetActionResult> {
   const user = await requireUser();
 
   const parsed = logSetSchema.safeParse(input);
@@ -115,16 +120,11 @@ export async function logSetAction(input: LogSetInput): Promise<ActionResult> {
     where: { sessionExerciseId: parsed.data.sessionExerciseId },
   });
 
-  const fullSessionExercise = await db.sessionExercise.findUniqueOrThrow({
-    where: { id: parsed.data.sessionExerciseId },
-    select: { exerciseId: true },
-  });
-
   await db.setEntry.create({
     data: {
       sessionExerciseId: parsed.data.sessionExerciseId,
       userId: user.id,
-      exerciseId: fullSessionExercise.exerciseId,
+      exerciseId: sessionExercise.exerciseId,
       setNumber: setCount + 1,
       weightKg: parsed.data.weightKg,
       reps: parsed.data.reps,
@@ -136,13 +136,18 @@ export async function logSetAction(input: LogSetInput): Promise<ActionResult> {
     },
   });
 
+  const newPRs = parsed.data.isWarmup
+    ? []
+    : await recomputeExercisePRs(user.id, sessionExercise.exerciseId);
+
   revalidatePath(`/workout/${sessionExercise.workoutSessionId}`);
-  return { success: true };
+  revalidatePath("/prs");
+  return { success: true, newPRs };
 }
 
 export async function updateSetAction(
   input: UpdateSetInput
-): Promise<ActionResult> {
+): Promise<SetActionResult> {
   const user = await requireUser();
 
   const parsed = updateSetSchema.safeParse(input);
@@ -154,6 +159,8 @@ export async function updateSetAction(
     where: { id: parsed.data.setId },
     select: {
       userId: true,
+      exerciseId: true,
+      isWarmup: true,
       sessionExercise: { select: { workoutSessionId: true } },
     },
   });
@@ -171,8 +178,13 @@ export async function updateSetAction(
     },
   });
 
+  const newPRs = set.isWarmup
+    ? []
+    : await recomputeExercisePRs(user.id, set.exerciseId);
+
   revalidatePath(`/workout/${set.sessionExercise.workoutSessionId}`);
-  return { success: true };
+  revalidatePath("/prs");
+  return { success: true, newPRs };
 }
 
 export async function deleteSetAction(setId: string): Promise<ActionResult> {
@@ -182,6 +194,7 @@ export async function deleteSetAction(setId: string): Promise<ActionResult> {
     where: { id: setId },
     select: {
       userId: true,
+      exerciseId: true,
       sessionExercise: { select: { workoutSessionId: true } },
     },
   });
@@ -190,8 +203,10 @@ export async function deleteSetAction(setId: string): Promise<ActionResult> {
   }
 
   await db.setEntry.delete({ where: { id: setId } });
+  await recomputeExercisePRs(user.id, set.exerciseId);
 
   revalidatePath(`/workout/${set.sessionExercise.workoutSessionId}`);
+  revalidatePath("/prs");
   return { success: true };
 }
 
@@ -214,10 +229,23 @@ export async function deleteWorkoutSessionAction(
   const user = await requireUser();
   await assertSessionOwnership(sessionId, user.id);
 
+  const affectedExerciseIds = await db.sessionExercise
+    .findMany({
+      where: { workoutSessionId: sessionId },
+      select: { exerciseId: true },
+      distinct: ["exerciseId"],
+    })
+    .then((rows) => rows.map((r) => r.exerciseId));
+
   await db.workoutSession.delete({ where: { id: sessionId } });
+
+  for (const exerciseId of affectedExerciseIds) {
+    await recomputeExercisePRs(user.id, exerciseId);
+  }
 
   revalidatePath("/history");
   revalidatePath("/dashboard");
+  revalidatePath("/prs");
   return { success: true };
 }
 
