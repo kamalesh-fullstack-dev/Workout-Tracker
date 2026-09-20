@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { signOutAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
+import { MainNav } from "@/components/nav/main-nav";
 
 export default async function AppLayout({
   children,
@@ -11,18 +12,21 @@ export default async function AppLayout({
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-border/60 flex items-center justify-between border-b px-4 py-3 sm:px-6">
-        <span className="font-semibold tracking-tight">Iron Log</span>
-        <div className="flex items-center gap-3">
-          <span className="text-muted-foreground hidden text-sm sm:inline">
-            {session?.user?.email}
-          </span>
-          <form action={signOutAction}>
-            <Button type="submit" variant="outline" size="sm">
-              Sign out
-            </Button>
-          </form>
+      <header className="border-border/60 flex flex-col gap-3 border-b px-4 py-3 sm:px-6">
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-semibold tracking-tight">Iron Log</span>
+          <div className="flex items-center gap-3">
+            <span className="text-muted-foreground hidden text-sm sm:inline">
+              {session?.user?.email}
+            </span>
+            <form action={signOutAction}>
+              <Button type="submit" variant="outline" size="sm">
+                Sign out
+              </Button>
+            </form>
+          </div>
         </div>
+        <MainNav />
       </header>
       <main className="flex flex-1 flex-col px-4 py-6 sm:px-6">{children}</main>
     </div>
