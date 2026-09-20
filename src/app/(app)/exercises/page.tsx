@@ -46,7 +46,11 @@ export default async function ExercisesPage({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
         <h1 className="text-xl font-semibold tracking-tight">Exercises</h1>
-        <Button size="sm" render={<Link href="/exercises/new">Add custom</Link>} />
+        <Button
+          size="sm"
+          nativeButton={false}
+          render={<Link href="/exercises/new">Add custom</Link>}
+        />
       </div>
       <ExerciseFilters />
       <ExerciseList exercises={exercises} currentUserId={user.id} />

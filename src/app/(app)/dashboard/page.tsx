@@ -44,6 +44,7 @@ export default async function DashboardPage() {
           <Button
             size="lg"
             className="mt-2 w-full"
+            nativeButton={false}
             render={
               <Link href={`/workout/${inProgressSession.id}`}>
                 Resume workout
@@ -55,6 +56,7 @@ export default async function DashboardPage() {
         <Button
           size="lg"
           className="h-12 w-full"
+          nativeButton={false}
           render={<Link href="/workout/start">Start workout</Link>}
         />
       )}

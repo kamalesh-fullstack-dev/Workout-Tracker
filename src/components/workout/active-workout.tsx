@@ -158,7 +158,7 @@ export function ActiveWorkout({
         onSelect={(exercise) => handleAddExercise(exercise)}
       />
 
-      <div className="bg-background fixed inset-x-0 bottom-0 border-t p-4">
+      <div className="bg-card/80 border-border fixed inset-x-0 bottom-0 z-20 border-t p-4 shadow-2xl backdrop-blur-xl">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
           <span className="text-muted-foreground text-sm">
             {exercises.length} exercise{exercises.length === 1 ? "" : "s"} ·{" "}
