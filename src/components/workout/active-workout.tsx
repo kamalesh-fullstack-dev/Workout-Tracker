@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic, useState, useTransition } from "react";
+import { useOptimistic, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -13,11 +13,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { ExercisePickerDialog } from "@/components/workout/exercise-picker-dialog";
 import { ExerciseBlock, type SetItem } from "@/components/workout/exercise-block";
+import { RestTimer, type RestTimerHandle } from "@/components/workout/rest-timer";
+
+const DEFAULT_REST_SECONDS = 90;
 
 export type ExerciseBlockData = {
   id: string;
   exerciseId: string;
   exerciseName: string;
+  restSeconds: number | null;
   sets: SetItem[];
   pending?: boolean;
 };
@@ -67,6 +71,7 @@ export function ActiveWorkout({
   );
   const [isPending, startTransition] = useTransition();
   const [isFinishing, setIsFinishing] = useState(false);
+  const restTimerRef = useRef<RestTimerHandle>(null);
 
   const totalSets = exercises.reduce((sum, e) => sum + e.sets.length, 0);
 
@@ -78,6 +83,7 @@ export function ActiveWorkout({
           id: `temp-${exercise.id}-${Date.now()}`,
           exerciseId: exercise.id,
           exerciseName: exercise.name,
+          restSeconds: null,
           sets: [],
           pending: true,
         },
@@ -122,6 +128,10 @@ export function ActiveWorkout({
       if ("error" in result) toast.error(result.error);
       router.refresh();
     });
+
+    if (!data.isWarmup) {
+      restTimerRef.current?.start(exercise?.restSeconds ?? DEFAULT_REST_SECONDS);
+    }
   }
 
   function handleDeleteSet(setId: string) {
@@ -157,6 +167,8 @@ export function ActiveWorkout({
       <ExercisePickerDialog
         onSelect={(exercise) => handleAddExercise(exercise)}
       />
+
+      <RestTimer ref={restTimerRef} />
 
       <div className="bg-card/80 border-border fixed inset-x-0 bottom-0 z-20 border-t p-4 shadow-2xl backdrop-blur-xl">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">

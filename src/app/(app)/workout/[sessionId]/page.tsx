@@ -34,6 +34,7 @@ export default async function WorkoutSessionPage({
     id: se.id,
     exerciseId: se.exerciseId,
     exerciseName: se.exercise.name,
+    restSeconds: se.restSeconds,
     sets: se.sets.map((s) => ({
       id: s.id,
       setNumber: s.setNumber,

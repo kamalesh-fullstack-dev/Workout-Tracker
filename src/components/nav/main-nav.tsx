@@ -6,6 +6,7 @@ import { cn } from "cn";
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/routines", label: "Routines" },
   { href: "/history", label: "History" },
   { href: "/exercises", label: "Exercises" },
 ];
