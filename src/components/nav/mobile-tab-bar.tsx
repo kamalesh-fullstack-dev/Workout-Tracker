@@ -23,12 +23,21 @@ const TAB_LINKS = [
   { href: "/body-metrics", label: "Body", icon: Ruler },
 ];
 
+// Screens with their own fixed bottom action bar — a second fixed bar here
+// would overlap and intercept taps meant for theirs, so stay out of the way.
+// This matches /workout/<id> (active session) and the routine builder
+// (/routines/new, /routines/<id>) but not the /routines list page itself.
+function hasOwnBottomBar(pathname: string) {
+  if (pathname.startsWith("/workout/")) return true;
+  if (pathname === "/routines/new") return true;
+  if (/^\/routines\/[^/]+$/.test(pathname)) return true;
+  return false;
+}
+
 export function MobileTabBar() {
   const pathname = usePathname();
 
-  // The active workout screen has its own fixed bottom action bar and rest
-  // timer — a second fixed bar here would overlap it, so stay out of the way.
-  if (pathname.startsWith("/workout/")) {
+  if (hasOwnBottomBar(pathname)) {
     return null;
   }
 

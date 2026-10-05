@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic, useRef, useState, useTransition } from "react";
+import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -91,6 +91,26 @@ export function ActiveWorkout({
   const [isPending, startTransition] = useTransition();
   const [isFinishing, setIsFinishing] = useState(false);
   const restTimerRef = useRef<RestTimerHandle>(null);
+
+  // Only one exercise's log form is open at a time, by position — not id —
+  // so this survives an optimistic temp-id being replaced by the real one.
+  // Defaults to the most recently added exercise and auto-advances there
+  // whenever the list grows, so logging a set on an earlier exercise never
+  // stays "live" once you've moved on (that was causing mis-taps).
+  const [openIndex, setOpenIndex] = useState<number | null>(
+    exercises.length > 0 ? exercises.length - 1 : null
+  );
+  const prevLengthRef = useRef(exercises.length);
+  useEffect(() => {
+    if (exercises.length > prevLengthRef.current) {
+      setOpenIndex(exercises.length - 1);
+    } else if (exercises.length < prevLengthRef.current) {
+      setOpenIndex((idx) =>
+        idx !== null && idx < exercises.length ? idx : exercises.length - 1
+      );
+    }
+    prevLengthRef.current = exercises.length;
+  }, [exercises.length]);
 
   const totalSets = exercises.reduce((sum, e) => sum + e.sets.length, 0);
 
@@ -200,13 +220,17 @@ export function ActiveWorkout({
 
   return (
     <div className="flex flex-col gap-4 pb-24">
-      {exercises.map((exercise) => (
+      {exercises.map((exercise, index) => (
         <ExerciseBlock
           key={exercise.id}
           exerciseName={exercise.exerciseName}
           sets={exercise.sets}
           suggestion={exercise.suggestion}
           disabled={isPending || exercise.id.startsWith("temp-")}
+          isOpen={index === openIndex}
+          onToggleOpen={() =>
+            setOpenIndex((current) => (current === index ? null : index))
+          }
           onLogSet={(data) => handleLogSet(exercise.id, data)}
           onDeleteSet={handleDeleteSet}
           onUpdateSet={handleUpdateSet}

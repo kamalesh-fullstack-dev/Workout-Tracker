@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Pencil, Sparkles, Trash2, Trophy, X } from "lucide-react";
+import { Check, ChevronDown, Pencil, Sparkles, Trash2, Trophy, X } from "lucide-react";
 import type { Suggestion } from "@/lib/suggestions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -143,6 +143,8 @@ export function ExerciseBlock({
   sets,
   suggestion,
   disabled,
+  isOpen,
+  onToggleOpen,
   onLogSet,
   onDeleteSet,
   onUpdateSet,
@@ -152,6 +154,8 @@ export function ExerciseBlock({
   sets: SetItem[];
   suggestion?: Suggestion | null;
   disabled?: boolean;
+  isOpen: boolean;
+  onToggleOpen: () => void;
   onLogSet: (data: {
     weightKg: number;
     reps: number;
@@ -199,10 +203,35 @@ export function ExerciseBlock({
     setIsWarmup(false);
   }
 
+  const lastLoggedSet = sets[sets.length - 1];
+
   return (
     <Card className="gap-3 p-4">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="font-medium">{exerciseName}</h3>
+        <button
+          type="button"
+          onClick={onToggleOpen}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+          aria-expanded={isOpen}
+        >
+          <ChevronDown
+            className={`text-muted-foreground size-4 shrink-0 transition-transform ${isOpen ? "" : "-rotate-90"}`}
+          />
+          <span className="min-w-0 flex-1">
+            <h3 className="truncate font-medium">{exerciseName}</h3>
+            {!isOpen && (
+              <span className="text-muted-foreground block text-xs">
+                {sets.length === 0
+                  ? "No sets logged"
+                  : `${sets.length} set${sets.length === 1 ? "" : "s"}${
+                      lastLoggedSet
+                        ? ` · last ${lastLoggedSet.weightKg} kg × ${lastLoggedSet.reps}`
+                        : ""
+                    }`}
+              </span>
+            )}
+          </span>
+        </button>
         <Button
           type="button"
           variant="ghost"
@@ -215,91 +244,95 @@ export function ExerciseBlock({
         </Button>
       </div>
 
-      {sets.length === 0 && suggestion && suggestion.source !== "none" && (
-        <div className="bg-primary/10 text-primary flex items-start gap-2 rounded-lg px-3 py-2 text-xs">
-          <Sparkles className="mt-0.5 size-3.5 shrink-0" />
-          <span>
-            {suggestion.rationale}
-            {suggestion.wouldBePR && (
-              <Badge variant="secondary" className="ml-2 align-middle">
-                <Trophy className="size-3" /> Potential PR
-              </Badge>
-            )}
-          </span>
-        </div>
-      )}
+      {isOpen && (
+        <>
+          {sets.length === 0 && suggestion && suggestion.source !== "none" && (
+            <div className="bg-primary/10 text-primary flex items-start gap-2 rounded-lg px-3 py-2 text-xs">
+              <Sparkles className="mt-0.5 size-3.5 shrink-0" />
+              <span>
+                {suggestion.rationale}
+                {suggestion.wouldBePR && (
+                  <Badge variant="secondary" className="ml-2 align-middle">
+                    <Trophy className="size-3" /> Potential PR
+                  </Badge>
+                )}
+              </span>
+            </div>
+          )}
 
-      {sets.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          {sets.map((set) => (
-            <SetRow
-              key={set.id}
-              set={set}
-              disabled={disabled}
-              onDelete={() => onDeleteSet(set.id)}
-              onUpdate={(data) => onUpdateSet(set.id, data)}
-            />
-          ))}
-        </div>
-      )}
+          {sets.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              {sets.map((set) => (
+                <SetRow
+                  key={set.id}
+                  set={set}
+                  disabled={disabled}
+                  onDelete={() => onDeleteSet(set.id)}
+                  onUpdate={(data) => onUpdateSet(set.id, data)}
+                />
+              ))}
+            </div>
+          )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-        <div className="grid grid-cols-3 gap-2">
-          <div className="flex flex-col gap-1">
-            <Label htmlFor={`weight-${exerciseName}`} className="text-muted-foreground text-xs">
-              Weight (kg)
-            </Label>
-            <Input
-              id={`weight-${exerciseName}`}
-              inputMode="decimal"
-              className="h-12 text-lg"
-              value={weight}
-              onChange={(e) => setWeight(e.target.value)}
-              disabled={disabled}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <Label htmlFor={`reps-${exerciseName}`} className="text-muted-foreground text-xs">
-              Reps
-            </Label>
-            <Input
-              id={`reps-${exerciseName}`}
-              inputMode="numeric"
-              className="h-12 text-lg"
-              value={reps}
-              onChange={(e) => setReps(e.target.value)}
-              disabled={disabled}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <Label htmlFor={`rpe-${exerciseName}`} className="text-muted-foreground text-xs">
-              RPE
-            </Label>
-            <Input
-              id={`rpe-${exerciseName}`}
-              inputMode="decimal"
-              placeholder="opt."
-              className="h-12 text-lg"
-              value={rpe}
-              onChange={(e) => setRpe(e.target.value)}
-              disabled={disabled}
-            />
-          </div>
-        </div>
-        <div className="flex items-center justify-between gap-2">
-          <Label className="flex items-center gap-2 text-sm font-normal">
-            <Checkbox
-              checked={isWarmup}
-              onCheckedChange={(checked) => setIsWarmup(checked === true)}
-              disabled={disabled}
-            />
-            Warmup set
-          </Label>
-          <Button type="submit" size="lg" className="h-12 flex-1" disabled={disabled}>
-            Log set
-          </Button>
-        </div>
-      </form>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="flex flex-col gap-1">
+                <Label htmlFor={`weight-${exerciseName}`} className="text-muted-foreground text-xs">
+                  Weight (kg)
+                </Label>
+                <Input
+                  id={`weight-${exerciseName}`}
+                  inputMode="decimal"
+                  className="h-12 text-lg"
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                  disabled={disabled}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label htmlFor={`reps-${exerciseName}`} className="text-muted-foreground text-xs">
+                  Reps
+                </Label>
+                <Input
+                  id={`reps-${exerciseName}`}
+                  inputMode="numeric"
+                  className="h-12 text-lg"
+                  value={reps}
+                  onChange={(e) => setReps(e.target.value)}
+                  disabled={disabled}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label htmlFor={`rpe-${exerciseName}`} className="text-muted-foreground text-xs">
+                  RPE
+                </Label>
+                <Input
+                  id={`rpe-${exerciseName}`}
+                  inputMode="decimal"
+                  placeholder="opt."
+                  className="h-12 text-lg"
+                  value={rpe}
+                  onChange={(e) => setRpe(e.target.value)}
+                  disabled={disabled}
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <Label className="flex items-center gap-2 text-sm font-normal">
+                <Checkbox
+                  checked={isWarmup}
+                  onCheckedChange={(checked) => setIsWarmup(checked === true)}
+                  disabled={disabled}
+                />
+                Warmup set
+              </Label>
+              <Button type="submit" size="lg" className="h-12 flex-1" disabled={disabled}>
+                Log set
+              </Button>
+            </div>
+          </form>
+        </>
+      )}
     </Card>
   );
 }

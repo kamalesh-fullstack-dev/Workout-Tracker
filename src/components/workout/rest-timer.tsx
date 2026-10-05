@@ -45,6 +45,29 @@ function playChime() {
   }
 }
 
+async function notifyRestComplete() {
+  try {
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") {
+      return;
+    }
+    // Once a page is controlled by a service worker (installed PWA, mostly
+    // on mobile), browsers throw if you call `new Notification()` directly —
+    // they require going through the registration instead.
+    if ("serviceWorker" in navigator) {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration) {
+        await registration.showNotification("Rest complete", {
+          body: "Time for your next set.",
+        });
+        return;
+      }
+    }
+    new Notification("Rest complete", { body: "Time for your next set." });
+  } catch {
+    // A failed notification should never crash the rest timer.
+  }
+}
+
 function formatTime(totalSeconds: number) {
   const m = Math.floor(totalSeconds / 60);
   const s = totalSeconds % 60;
@@ -73,12 +96,7 @@ export const RestTimer = forwardRef<RestTimerHandle>(function RestTimer(
       if (!chimedRef.current) {
         chimedRef.current = true;
         playChime();
-        if (
-          typeof Notification !== "undefined" &&
-          Notification.permission === "granted"
-        ) {
-          new Notification("Rest complete", { body: "Time for your next set." });
-        }
+        void notifyRestComplete();
       }
       return;
     }
