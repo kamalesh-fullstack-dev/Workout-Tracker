@@ -35,6 +35,7 @@ export type ExerciseBlockData = {
 
 type OptimisticAction =
   | { type: "add-exercise"; exercise: ExerciseBlockData }
+  | { type: "confirm-exercise"; tempId: string; realId: string }
   | { type: "remove-exercise"; sessionExerciseId: string }
   | { type: "add-set"; sessionExerciseId: string; set: SetItem }
   | { type: "remove-set"; setId: string }
@@ -51,6 +52,12 @@ function reducer(
   switch (action.type) {
     case "add-exercise":
       return [...state, action.exercise];
+    case "confirm-exercise":
+      return state.map((e) =>
+        e.id === action.tempId
+          ? { ...e, id: action.realId, pending: false }
+          : e
+      );
     case "remove-exercise":
       return state.filter((e) => e.id !== action.sessionExerciseId);
     case "add-set":
@@ -90,9 +97,30 @@ export function ActiveWorkout({
     initialExercises,
     reducer
   );
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [isFinishing, setIsFinishing] = useState(false);
   const restTimerRef = useRef<RestTimerHandle>(null);
+
+  // Tracks which exercises currently have an in-flight server action, so
+  // only that exercise's "Log set" gets disabled — adding a new exercise or
+  // logging a set elsewhere shouldn't block sets being logged on other
+  // exercises while their own requests are still in flight.
+  const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
+
+  function withBusy(id: string, fn: () => Promise<void>) {
+    setBusyIds((prev) => new Set(prev).add(id));
+    startTransition(async () => {
+      try {
+        await fn();
+      } finally {
+        setBusyIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      }
+    });
+  }
 
   // Only one exercise's log form is open at a time, by position — not id —
   // so this survives an optimistic temp-id being replaced by the real one.
@@ -121,15 +149,16 @@ export function ActiveWorkout({
     const summary = newPRs
       .map((pr) => `${PR_TYPE_LABELS[pr.type]}: ${pr.value}`)
       .join(" · ");
-    toast.success(`New PR! ${summary}`);
+    toast.success(`🏁 New PR! ${summary}`);
   }
 
   function handleAddExercise(exercise: { id: string; name: string }) {
+    const tempId = `temp-${exercise.id}-${Date.now()}`;
     startTransition(async () => {
       applyOptimistic({
         type: "add-exercise",
         exercise: {
-          id: `temp-${exercise.id}-${Date.now()}`,
+          id: tempId,
           exerciseId: exercise.id,
           exerciseName: exercise.name,
           restSeconds: null,
@@ -139,13 +168,24 @@ export function ActiveWorkout({
         },
       });
       const result = await addExerciseToSessionAction(sessionId, exercise.id);
-      if ("error" in result) toast.error(result.error);
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      // Swap in the real id as soon as the row exists so sets can be logged
+      // right away — the suggestion/last-session hints below still arrive
+      // via the refresh, but logging a set was never waiting on them.
+      applyOptimistic({
+        type: "confirm-exercise",
+        tempId,
+        realId: result.sessionExerciseId,
+      });
       router.refresh();
     });
   }
 
   function handleRemoveExercise(sessionExerciseId: string) {
-    startTransition(async () => {
+    withBusy(sessionExerciseId, async () => {
       applyOptimistic({ type: "remove-exercise", sessionExerciseId });
       const result = await removeExerciseFromSessionAction(sessionExerciseId);
       if ("error" in result) toast.error(result.error);
@@ -160,7 +200,7 @@ export function ActiveWorkout({
     const exercise = exercises.find((e) => e.id === sessionExerciseId);
     const setNumber = (exercise?.sets.length ?? 0) + 1;
 
-    startTransition(async () => {
+    withBusy(sessionExerciseId, async () => {
       applyOptimistic({
         type: "add-set",
         sessionExerciseId,
@@ -189,7 +229,9 @@ export function ActiveWorkout({
   }
 
   function handleDeleteSet(setId: string) {
-    startTransition(async () => {
+    const sessionExerciseId =
+      exercises.find((e) => e.sets.some((s) => s.id === setId))?.id ?? setId;
+    withBusy(sessionExerciseId, async () => {
       applyOptimistic({ type: "remove-set", setId });
       const result = await deleteSetAction(setId);
       if ("error" in result) toast.error(result.error);
@@ -201,7 +243,9 @@ export function ActiveWorkout({
     setId: string,
     data: { weightKg: number; reps: number; rpe: number | null }
   ) {
-    startTransition(async () => {
+    const sessionExerciseId =
+      exercises.find((e) => e.sets.some((s) => s.id === setId))?.id ?? setId;
+    withBusy(sessionExerciseId, async () => {
       applyOptimistic({ type: "update-set", setId, data });
       const result = await updateSetAction({ setId, ...data });
       if ("error" in result) {
@@ -229,7 +273,7 @@ export function ActiveWorkout({
           sets={exercise.sets}
           suggestion={exercise.suggestion}
           lastSessionSets={exercise.lastSessionSets}
-          disabled={isPending || exercise.id.startsWith("temp-")}
+          disabled={exercise.id.startsWith("temp-") || busyIds.has(exercise.id)}
           isOpen={index === openIndex}
           onToggleOpen={() =>
             setOpenIndex((current) => (current === index ? null : index))

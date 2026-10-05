@@ -17,6 +17,9 @@ import {
 
 type ActionResult = { error: string } | { success: true };
 type SetActionResult = { error: string } | { success: true; newPRs: NewPR[] };
+type AddExerciseResult =
+  | { error: string }
+  | { success: true; sessionExerciseId: string };
 
 export async function startWorkoutAction() {
   const user = await requireUser();
@@ -55,7 +58,7 @@ async function getSessionIdForSessionExercise(sessionExerciseId: string) {
 export async function addExerciseToSessionAction(
   sessionId: string,
   exerciseId: string
-): Promise<ActionResult> {
+): Promise<AddExerciseResult> {
   const user = await requireUser();
   await assertSessionOwnership(sessionId, user.id);
 
@@ -71,16 +74,17 @@ export async function addExerciseToSessionAction(
     where: { workoutSessionId: sessionId },
   });
 
-  await db.sessionExercise.create({
+  const sessionExercise = await db.sessionExercise.create({
     data: {
       workoutSessionId: sessionId,
       exerciseId,
       order: count,
     },
+    select: { id: true },
   });
 
   revalidatePath(`/workout/${sessionId}`);
-  return { success: true };
+  return { success: true, sessionExerciseId: sessionExercise.id };
 }
 
 export async function removeExerciseFromSessionAction(

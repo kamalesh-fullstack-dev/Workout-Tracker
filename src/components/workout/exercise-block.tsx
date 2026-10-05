@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronDown, History, Pencil, Sparkles, Trash2, Trophy, X } from "lucide-react";
+import { Check, ChevronDown, Flag, History, Pencil, Sparkles, Trash2, X } from "lucide-react";
 import type { Suggestion } from "@/lib/suggestions";
 import type { LastSessionSet } from "@/lib/progress";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export type SetItem = {
   id: string;
@@ -207,6 +208,10 @@ export function ExerciseBlock({
   }
 
   const lastLoggedSet = sets[sets.length - 1];
+  // lastSessionSets stays undefined until the post-add refresh lands — show
+  // a placeholder the same shape as the real row so that content filling in
+  // doesn't yank the input fields further down the screen.
+  const isHistoryLoading = lastSessionSets === undefined;
 
   return (
     <Card className="gap-3 p-4">
@@ -249,32 +254,47 @@ export function ExerciseBlock({
 
       {isOpen && (
         <>
-          {lastSessionSets && lastSessionSets.length > 0 && (
-            <div className="bg-muted/50 text-muted-foreground flex items-start gap-2 rounded-lg px-3 py-2 text-xs">
-              <History className="mt-0.5 size-3.5 shrink-0" />
-              <span>
-                <span className="font-medium">Last time: </span>
-                {lastSessionSets
-                  .map(
-                    (s) =>
-                      `${s.weightKg} kg × ${s.reps}${s.isWarmup ? " (warmup)" : ""}`
-                  )
-                  .join(" · ")}
-              </span>
+          {isHistoryLoading ? (
+            <div className="flex flex-col gap-2">
+              <div className="bg-muted/50 flex items-center gap-2 rounded-lg px-3 py-2">
+                <Skeleton className="size-3.5 shrink-0 rounded-full" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
+              <div className="bg-primary/10 flex items-center gap-2 rounded-lg px-3 py-2">
+                <Skeleton className="size-3.5 shrink-0 rounded-full" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
             </div>
-          )}
+          ) : (
+            <div className="animate-in fade-in flex flex-col gap-2 duration-300">
+              {lastSessionSets && lastSessionSets.length > 0 && (
+                <div className="bg-muted/50 text-muted-foreground flex items-start gap-2 rounded-lg px-3 py-2 text-xs">
+                  <History className="mt-0.5 size-3.5 shrink-0" />
+                  <span>
+                    <span className="font-medium">Last time: </span>
+                    {lastSessionSets
+                      .map(
+                        (s) =>
+                          `${s.weightKg} kg × ${s.reps}${s.isWarmup ? " (warmup)" : ""}`
+                      )
+                      .join(" · ")}
+                  </span>
+                </div>
+              )}
 
-          {sets.length === 0 && suggestion && suggestion.source !== "none" && (
-            <div className="bg-primary/10 text-primary flex items-start gap-2 rounded-lg px-3 py-2 text-xs">
-              <Sparkles className="mt-0.5 size-3.5 shrink-0" />
-              <span>
-                {suggestion.rationale}
-                {suggestion.wouldBePR && (
-                  <Badge variant="secondary" className="ml-2 align-middle">
-                    <Trophy className="size-3" /> Potential PR
-                  </Badge>
-                )}
-              </span>
+              {sets.length === 0 && suggestion && suggestion.source !== "none" && (
+                <div className="bg-primary/10 text-primary flex items-start gap-2 rounded-lg px-3 py-2 text-xs">
+                  <Sparkles className="mt-0.5 size-3.5 shrink-0" />
+                  <span>
+                    {suggestion.rationale}
+                    {suggestion.wouldBePR && (
+                      <Badge variant="secondary" className="ml-2 align-middle">
+                        <Flag className="size-3" /> Potential PR
+                      </Badge>
+                    )}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 

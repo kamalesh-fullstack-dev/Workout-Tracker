@@ -78,10 +78,6 @@ export default async function WorkoutSessionPage({
 
   const exercises = await Promise.all(
     baseExercises.map(async (exercise) => {
-      if (isCompleted) {
-        return { ...exercise, suggestion: null, lastSessionSets: [] };
-      }
-
       const lastSessionSets = await getLastSessionSets(
         user.id,
         exercise.exerciseId
