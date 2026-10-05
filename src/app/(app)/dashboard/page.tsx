@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Trophy } from "lucide-react";
+import { Dumbbell, Trophy } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { requireUser } from "@/actions/auth";
 import { db } from "@/lib/db";
+import { formatHistoryDate } from "@/lib/dates";
 import { PR_TYPE_LABELS, type PRType } from "@/lib/pr-types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -60,6 +61,7 @@ export default async function DashboardPage() {
             nativeButton={false}
             render={
               <Link href={`/workout/${inProgressSession.id}`}>
+                <Dumbbell />
                 Resume workout
               </Link>
             }
@@ -70,7 +72,12 @@ export default async function DashboardPage() {
           size="lg"
           className="h-12 w-full"
           nativeButton={false}
-          render={<Link href="/workout/start">Start workout</Link>}
+          render={
+            <Link href="/workout/start">
+              <Dumbbell />
+              Start workout
+            </Link>
+          }
         />
       )}
 
@@ -113,11 +120,7 @@ export default async function DashboardPage() {
                 <Card className="gap-1 p-3 transition-colors hover:bg-muted/50">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">
-                      {new Date(s.startedAt).toLocaleDateString(undefined, {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                      })}
+                      {formatHistoryDate(s.startedAt)}
                     </span>
                     <span className="text-muted-foreground text-xs">
                       {s.exercises.length} exercises

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/actions/auth";
 import { db } from "@/lib/db";
+import { formatHistoryDate } from "@/lib/dates";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DeleteWorkoutButton } from "@/components/workout/delete-workout-button";
@@ -57,11 +58,7 @@ export default async function HistoryPage() {
                 <Link href={`/workout/${session.id}`} className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">
-                      {new Date(session.startedAt).toLocaleDateString(undefined, {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                      })}
+                      {formatHistoryDate(session.startedAt)}
                     </span>
                     <Badge variant="outline">
                       {session.exercises.length} exercise
