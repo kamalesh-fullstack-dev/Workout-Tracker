@@ -15,7 +15,10 @@ export default async function AppLayout({
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="header-stripe bg-card/70 sticky top-0 z-20 flex flex-col gap-3 px-4 py-3 shadow-sm backdrop-blur-xl sm:px-6">
+      <header
+        className="header-stripe bg-card/70 sticky top-0 z-20 flex flex-col gap-3 px-4 py-3 shadow-sm backdrop-blur-xl sm:px-6"
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}
+      >
         <div className="flex items-center justify-between gap-2">
           <span className="font-heading text-primary flex items-center gap-1.5 text-lg tracking-tight">
             <Flag className="size-4" />

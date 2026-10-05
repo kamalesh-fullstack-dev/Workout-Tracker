@@ -250,7 +250,10 @@ export function RoutineBuilder({
 
       <ExercisePickerDialog onSelect={addExercise} />
 
-      <div className="bg-card/80 border-border fixed inset-x-0 bottom-0 z-20 border-t p-4 shadow-2xl backdrop-blur-xl">
+      <div
+        className="bg-card/80 border-border fixed inset-x-0 bottom-0 z-20 border-t p-4 shadow-2xl backdrop-blur-xl"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}
+      >
         <div className="mx-auto flex max-w-2xl justify-end">
           <Button size="lg" className="h-12" disabled={isSaving} onClick={handleSave}>
             {isSaving ? "Saving..." : "Save routine"}

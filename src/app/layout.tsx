@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   description: "Track workouts, hit PRs, and get smart weight & rep suggestions.",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Iron Log",
   },
 };
@@ -36,6 +36,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f7f6f3" },
     { media: "(prefers-color-scheme: dark)", color: "#1c1917" },
