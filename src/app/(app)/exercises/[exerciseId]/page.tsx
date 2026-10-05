@@ -47,9 +47,15 @@ export default async function ExerciseDetailPage({
           {exercise.name}
         </h1>
         <div className="mt-2 flex flex-wrap gap-1.5">
-          <Badge variant="outline">{EQUIPMENT_LABELS[exercise.equipment]}</Badge>
+          <Badge variant="outline" className="border-primary/50 text-primary">
+            {EQUIPMENT_LABELS[exercise.equipment]}
+          </Badge>
           {exercise.muscleGroups.map((group) => (
-            <Badge key={group} variant="outline">
+            <Badge
+              key={group}
+              variant="outline"
+              className="border-primary/50 text-primary"
+            >
               {MUSCLE_GROUP_LABELS[group]}
             </Badge>
           ))}

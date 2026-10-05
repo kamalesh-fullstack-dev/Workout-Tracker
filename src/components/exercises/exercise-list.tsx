@@ -81,11 +81,15 @@ export function ExerciseList({
               {exercise.isCustom && (
                 <Badge variant="secondary">Custom</Badge>
               )}
-              <Badge variant="outline">
+              <Badge variant="outline" className="border-primary/50 text-primary">
                 {EQUIPMENT_LABELS[exercise.equipment]}
               </Badge>
               {exercise.muscleGroups.map((group) => (
-                <Badge key={group} variant="outline">
+                <Badge
+                  key={group}
+                  variant="outline"
+                  className="border-primary/50 text-primary"
+                >
                   {MUSCLE_GROUP_LABELS[group]}
                 </Badge>
               ))}

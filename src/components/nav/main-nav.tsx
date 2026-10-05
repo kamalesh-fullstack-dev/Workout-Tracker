@@ -27,9 +27,9 @@ export function MainNav() {
             key={link.href}
             href={link.href}
             className={cn(
-              "rounded-md px-2.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
+              "relative rounded-md px-2.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
               isActive
-                ? "bg-muted text-foreground"
+                ? "bg-muted text-foreground after:absolute after:inset-x-2.5 after:-bottom-1.5 after:h-0.5 after:rounded-full after:bg-primary"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
