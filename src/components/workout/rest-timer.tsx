@@ -78,32 +78,57 @@ export const RestTimer = forwardRef<RestTimerHandle>(function RestTimer(
   _props,
   ref
 ) {
-  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+  // Tracked as an absolute end timestamp, not a counter decremented once a
+  // second — a plain setTimeout/setInterval chain drifts or gets throttled
+  // when the tab/screen is backgrounded (very common mid-rest on mobile),
+  // which could leave the display stuck instead of catching up. Recomputing
+  // from Date.now() on every tick, and immediately on visibilitychange, self
+  // -corrects regardless of how long the timers were paused.
+  const [endTime, setEndTime] = useState<number | null>(null);
   const [total, setTotal] = useState(0);
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const chimedRef = useRef(false);
 
   useImperativeHandle(ref, () => ({
     start(seconds: number) {
       chimedRef.current = false;
       setTotal(seconds);
-      setSecondsLeft(seconds);
+      setEndTime(Date.now() + seconds * 1000);
     },
   }));
 
   useEffect(() => {
-    if (secondsLeft === null) return;
-    if (secondsLeft <= 0) {
-      if (!chimedRef.current) {
-        chimedRef.current = true;
-        playChime();
-        void notifyRestComplete();
-      }
+    if (endTime === null) {
+      setSecondsLeft(null);
       return;
     }
-    const id = setTimeout(() => {
-      setSecondsLeft((s) => (s !== null ? s - 1 : null));
-    }, 1000);
-    return () => clearTimeout(id);
+
+    function sync() {
+      setSecondsLeft(Math.max(0, Math.ceil((endTime! - Date.now()) / 1000)));
+    }
+
+    sync();
+    const interval = setInterval(sync, 1000);
+
+    function handleVisibility() {
+      if (document.visibilityState === "visible") sync();
+    }
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", sync);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", sync);
+    };
+  }, [endTime]);
+
+  useEffect(() => {
+    if (secondsLeft === 0 && !chimedRef.current) {
+      chimedRef.current = true;
+      playChime();
+      void notifyRestComplete();
+    }
   }, [secondsLeft]);
 
   useEffect(() => {
@@ -140,7 +165,7 @@ export const RestTimer = forwardRef<RestTimerHandle>(function RestTimer(
           type="button"
           variant="ghost"
           size="icon-sm"
-          onClick={() => setSecondsLeft((s) => (s ?? 0) + 15)}
+          onClick={() => setEndTime((e) => (e ?? Date.now()) + 15_000)}
           aria-label="Add 15 seconds"
         >
           <Plus />
@@ -149,7 +174,7 @@ export const RestTimer = forwardRef<RestTimerHandle>(function RestTimer(
           type="button"
           variant="ghost"
           size="icon-sm"
-          onClick={() => setSecondsLeft(null)}
+          onClick={() => setEndTime(null)}
           aria-label="Dismiss timer"
         >
           <X />
