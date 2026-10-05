@@ -15,12 +15,14 @@ import { TrendChart } from "@/components/charts/trend-chart";
 
 export function ProgressExplorer({
   exercises,
+  initialExerciseId,
   initialData,
 }: {
-  exercises: { id: string; name: string }[];
+  exercises: { id: string; name: string; sessionCount?: number }[];
+  initialExerciseId: string;
   initialData: ProgressPoint[];
 }) {
-  const [exerciseId, setExerciseId] = useState(exercises[0].id);
+  const [exerciseId, setExerciseId] = useState(initialExerciseId);
   const [data, setData] = useState(initialData);
   const [isPending, startTransition] = useTransition();
 
@@ -43,6 +45,12 @@ export function ProgressExplorer({
           {exercises.map((exercise) => (
             <SelectItem key={exercise.id} value={exercise.id}>
               {exercise.name}
+              {exercise.sessionCount != null && (
+                <span className="text-muted-foreground">
+                  {" "}
+                  · {exercise.sessionCount} session{exercise.sessionCount === 1 ? "" : "s"}
+                </span>
+              )}
             </SelectItem>
           ))}
         </SelectContent>

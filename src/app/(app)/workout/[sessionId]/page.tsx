@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { fetchSuggestionForExercise } from "@/actions/workouts";
 import { ActiveWorkout } from "@/components/workout/active-workout";
 import { DeleteWorkoutButton } from "@/components/workout/delete-workout-button";
+import { SaveAsRoutineButton } from "@/components/workout/save-as-routine-button";
 import { Badge } from "@/components/ui/badge";
 
 export default async function WorkoutSessionPage({
@@ -108,6 +109,18 @@ export default async function WorkoutSessionPage({
         </div>
         <div className="flex items-center gap-2">
           {isCompleted && <Badge variant="secondary">Finished</Badge>}
+          {session.exercises.length > 0 && (
+            <SaveAsRoutineButton
+              sessionId={session.id}
+              defaultName={
+                session.name ??
+                `Workout ${new Date(session.startedAt).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                })}`
+              }
+            />
+          )}
           <DeleteWorkoutButton sessionId={session.id} />
         </div>
       </div>

@@ -103,6 +103,64 @@ export async function deleteRoutineAction(
   return { success: true };
 }
 
+export async function saveWorkoutAsRoutineAction(
+  sessionId: string,
+  name: string
+): Promise<ActionResult> {
+  const user = await requireUser();
+
+  const trimmedName = name.trim();
+  if (!trimmedName) {
+    return { error: "Give the routine a name." };
+  }
+
+  const session = await db.workoutSession.findUnique({
+    where: { id: sessionId },
+    include: {
+      exercises: {
+        orderBy: { order: "asc" },
+        include: {
+          sets: { where: { isWarmup: false }, orderBy: { setNumber: "asc" } },
+        },
+      },
+    },
+  });
+  if (!session || session.userId !== user.id) {
+    return { error: "Workout not found." };
+  }
+  if (session.exercises.length === 0) {
+    return { error: "Add at least one exercise before saving this as a routine." };
+  }
+
+  const created = await db.routineTemplate.create({
+    data: {
+      userId: user.id,
+      name: trimmedName,
+      exercises: {
+        create: session.exercises.map((se, index) => ({
+          exerciseId: se.exerciseId,
+          order: index,
+          restSeconds: se.restSeconds,
+          targetSets: {
+            create:
+              se.sets.length > 0
+                ? se.sets.map((s, setIndex) => ({
+                    setNumber: setIndex + 1,
+                    targetReps: s.reps,
+                    targetWeightKg: s.weightKg,
+                  }))
+                : [{ setNumber: 1, targetReps: null, targetWeightKg: null }],
+          },
+        })),
+      },
+    },
+    select: { id: true },
+  });
+
+  revalidatePath("/routines");
+  return { success: true, routineId: created.id };
+}
+
 export async function startWorkoutFromRoutineAction(routineId: string) {
   const user = await requireUser();
 
