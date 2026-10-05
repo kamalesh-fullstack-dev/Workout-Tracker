@@ -39,7 +39,11 @@ export function ProgressExplorer({
     <div className="flex flex-col gap-4">
       <Select value={exerciseId} onValueChange={handleChange}>
         <SelectTrigger className="w-full">
-          <SelectValue />
+          <SelectValue>
+            {(value: string) =>
+              exercises.find((e) => e.id === value)?.name ?? "Select an exercise"
+            }
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {exercises.map((exercise) => (

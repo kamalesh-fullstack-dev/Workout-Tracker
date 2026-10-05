@@ -64,7 +64,13 @@ export function ExerciseFilters() {
           onValueChange={(value) => updateParam("muscle", value as string)}
         >
           <SelectTrigger size="sm">
-            <SelectValue placeholder="Muscle group" />
+            <SelectValue placeholder="Muscle group">
+              {(value: string) =>
+                value === ANY
+                  ? "All muscle groups"
+                  : MUSCLE_GROUP_LABELS[value as keyof typeof MUSCLE_GROUP_LABELS]
+              }
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ANY}>All muscle groups</SelectItem>
@@ -81,7 +87,13 @@ export function ExerciseFilters() {
           onValueChange={(value) => updateParam("equipment", value as string)}
         >
           <SelectTrigger size="sm">
-            <SelectValue placeholder="Equipment" />
+            <SelectValue placeholder="Equipment">
+              {(value: string) =>
+                value === ANY
+                  ? "All equipment"
+                  : EQUIPMENT_LABELS[value as keyof typeof EQUIPMENT_LABELS]
+              }
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ANY}>All equipment</SelectItem>

@@ -83,7 +83,9 @@ export function MeasurementsSection({
           <Label className="text-muted-foreground text-xs">Type</Label>
           <Select value={type} onValueChange={(v) => setType(v as typeof type)}>
             <SelectTrigger className="h-10 w-32">
-              <SelectValue />
+              <SelectValue>
+                {(value: typeof type) => MEASUREMENT_TYPE_LABELS[value]}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {MEASUREMENT_TYPES.map((t) => (

@@ -112,7 +112,11 @@ export default function NewExercisePage() {
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger className="w-full">
-                          <SelectValue />
+                          <SelectValue>
+                            {(value: string) =>
+                              value.charAt(0) + value.slice(1).toLowerCase()
+                            }
+                          </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -137,7 +141,11 @@ export default function NewExercisePage() {
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger className="w-full">
-                          <SelectValue />
+                          <SelectValue>
+                            {(value: keyof typeof EQUIPMENT_LABELS) =>
+                              EQUIPMENT_LABELS[value]
+                            }
+                          </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -162,7 +170,11 @@ export default function NewExercisePage() {
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger className="w-full">
-                          <SelectValue />
+                          <SelectValue>
+                            {(value: keyof typeof TRACKING_TYPE_LABELS) =>
+                              TRACKING_TYPE_LABELS[value]
+                            }
+                          </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
