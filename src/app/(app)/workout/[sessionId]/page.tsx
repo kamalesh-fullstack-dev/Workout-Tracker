@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/actions/auth";
 import { db } from "@/lib/db";
 import { fetchSuggestionForExercise } from "@/actions/workouts";
+import { getLastSessionSets } from "@/lib/progress";
 import { ActiveWorkout } from "@/components/workout/active-workout";
 import { DeleteWorkoutButton } from "@/components/workout/delete-workout-button";
 import { SaveAsRoutineButton } from "@/components/workout/save-as-routine-button";
@@ -77,19 +78,32 @@ export default async function WorkoutSessionPage({
 
   const exercises = await Promise.all(
     baseExercises.map(async (exercise) => {
-      if (isCompleted || exercise.sets.length > 0) {
-        return { ...exercise, suggestion: null };
+      if (isCompleted) {
+        return { ...exercise, suggestion: null, lastSessionSets: [] };
       }
+
+      const lastSessionSets = await getLastSessionSets(
+        user.id,
+        exercise.exerciseId
+      ).catch((err) => {
+        console.error("Failed to fetch last session sets for", exercise.exerciseId, err);
+        return [];
+      });
+
+      if (exercise.sets.length > 0) {
+        return { ...exercise, suggestion: null, lastSessionSets };
+      }
+
       try {
         const suggestion = await fetchSuggestionForExercise(
           user.id,
           exercise.exerciseId,
           routineTargetsByExerciseId.get(exercise.exerciseId)
         );
-        return { ...exercise, suggestion };
+        return { ...exercise, suggestion, lastSessionSets };
       } catch (err) {
         console.error("Failed to compute suggestion for", exercise.exerciseId, err);
-        return { ...exercise, suggestion: null };
+        return { ...exercise, suggestion: null, lastSessionSets };
       }
     })
   );

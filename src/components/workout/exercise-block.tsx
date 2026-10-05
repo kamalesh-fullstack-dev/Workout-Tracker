@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronDown, Pencil, Sparkles, Trash2, Trophy, X } from "lucide-react";
+import { Check, ChevronDown, History, Pencil, Sparkles, Trash2, Trophy, X } from "lucide-react";
 import type { Suggestion } from "@/lib/suggestions";
+import type { LastSessionSet } from "@/lib/progress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -142,6 +143,7 @@ export function ExerciseBlock({
   exerciseName,
   sets,
   suggestion,
+  lastSessionSets,
   disabled,
   isOpen,
   onToggleOpen,
@@ -153,6 +155,7 @@ export function ExerciseBlock({
   exerciseName: string;
   sets: SetItem[];
   suggestion?: Suggestion | null;
+  lastSessionSets?: LastSessionSet[];
   disabled?: boolean;
   isOpen: boolean;
   onToggleOpen: () => void;
@@ -246,6 +249,21 @@ export function ExerciseBlock({
 
       {isOpen && (
         <>
+          {lastSessionSets && lastSessionSets.length > 0 && (
+            <div className="bg-muted/50 text-muted-foreground flex items-start gap-2 rounded-lg px-3 py-2 text-xs">
+              <History className="mt-0.5 size-3.5 shrink-0" />
+              <span>
+                <span className="font-medium">Last time: </span>
+                {lastSessionSets
+                  .map(
+                    (s) =>
+                      `${s.weightKg} kg × ${s.reps}${s.isWarmup ? " (warmup)" : ""}`
+                  )
+                  .join(" · ")}
+              </span>
+            </div>
+          )}
+
           {sets.length === 0 && suggestion && suggestion.source !== "none" && (
             <div className="bg-primary/10 text-primary flex items-start gap-2 rounded-lg px-3 py-2 text-xs">
               <Sparkles className="mt-0.5 size-3.5 shrink-0" />

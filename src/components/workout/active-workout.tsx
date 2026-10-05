@@ -13,6 +13,7 @@ import {
   updateSetAction,
 } from "@/actions/workouts";
 import type { Suggestion } from "@/lib/suggestions";
+import type { LastSessionSet } from "@/lib/progress";
 import { PR_TYPE_LABELS, type NewPR } from "@/lib/pr-types";
 import { Button } from "@/components/ui/button";
 import { ExercisePickerDialog } from "@/components/workout/exercise-picker-dialog";
@@ -28,6 +29,7 @@ export type ExerciseBlockData = {
   restSeconds: number | null;
   sets: SetItem[];
   suggestion?: Suggestion | null;
+  lastSessionSets?: LastSessionSet[];
   pending?: boolean;
 };
 
@@ -226,6 +228,7 @@ export function ActiveWorkout({
           exerciseName={exercise.exerciseName}
           sets={exercise.sets}
           suggestion={exercise.suggestion}
+          lastSessionSets={exercise.lastSessionSets}
           disabled={isPending || exercise.id.startsWith("temp-")}
           isOpen={index === openIndex}
           onToggleOpen={() =>

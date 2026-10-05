@@ -1,6 +1,51 @@
 import { db } from "@/lib/db";
 import { estimatedOneRepMax } from "@/lib/units";
 
+export type LastSessionSet = {
+  setNumber: number;
+  weightKg: number;
+  reps: number;
+  rpe: number | null;
+  isWarmup: boolean;
+};
+
+/**
+ * The full set of sets logged the last time this exercise was done — not
+ * just the previous session's best, but every set from that one session —
+ * so it can stay visible as a reference while logging the current one.
+ */
+export async function getLastSessionSets(
+  userId: string,
+  exerciseId: string
+): Promise<LastSessionSet[]> {
+  const mostRecentSet = await db.setEntry.findFirst({
+    where: { userId, exerciseId, isCompleted: true },
+    orderBy: { completedAt: "desc" },
+    select: { sessionExerciseId: true },
+  });
+  if (!mostRecentSet) return [];
+
+  const sets = await db.setEntry.findMany({
+    where: { sessionExerciseId: mostRecentSet.sessionExerciseId },
+    orderBy: { setNumber: "asc" },
+    select: {
+      setNumber: true,
+      weightKg: true,
+      reps: true,
+      rpe: true,
+      isWarmup: true,
+    },
+  });
+
+  return sets.map((s) => ({
+    setNumber: s.setNumber,
+    weightKg: Number(s.weightKg),
+    reps: s.reps,
+    rpe: s.rpe != null ? Number(s.rpe) : null,
+    isWarmup: s.isWarmup,
+  }));
+}
+
 export type ProgressPoint = {
   date: string;
   bestE1RM: number;
