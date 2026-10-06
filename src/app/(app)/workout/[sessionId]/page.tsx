@@ -80,7 +80,8 @@ export default async function WorkoutSessionPage({
     baseExercises.map(async (exercise) => {
       const lastSessionSets = await getLastSessionSets(
         user.id,
-        exercise.exerciseId
+        exercise.exerciseId,
+        sessionId
       ).catch((err) => {
         console.error("Failed to fetch last session sets for", exercise.exerciseId, err);
         return [];

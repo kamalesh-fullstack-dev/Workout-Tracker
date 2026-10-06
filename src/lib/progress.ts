@@ -13,13 +13,30 @@ export type LastSessionSet = {
  * The full set of sets logged the last time this exercise was done — not
  * just the previous session's best, but every set from that one session —
  * so it can stay visible as a reference while logging the current one.
+ *
+ * excludeWorkoutSessionId keeps this pinned to a genuinely *previous*
+ * session: without it, logging a set in the session being viewed makes
+ * that set the most recent completed one, and this would start mirroring
+ * the sets being logged right now instead of staying fixed as a reference.
  */
 export async function getLastSessionSets(
   userId: string,
-  exerciseId: string
+  exerciseId: string,
+  excludeWorkoutSessionId?: string
 ): Promise<LastSessionSet[]> {
   const mostRecentSet = await db.setEntry.findFirst({
-    where: { userId, exerciseId, isCompleted: true },
+    where: {
+      userId,
+      exerciseId,
+      isCompleted: true,
+      ...(excludeWorkoutSessionId
+        ? {
+            sessionExercise: {
+              workoutSessionId: { not: excludeWorkoutSessionId },
+            },
+          }
+        : {}),
+    },
     orderBy: { completedAt: "desc" },
     select: { sessionExerciseId: true },
   });
