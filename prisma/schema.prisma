@@ -131,6 +131,8 @@ model RoutineExercise {
   exercise    Exercise        @relation(fields: [exerciseId], references: [id])
   order       Int
   restSeconds Int?
+  // Shared by every exercise in the same superset/circuit; null if standalone.
+  groupId     String?
 
   targetSets RoutineExerciseSet[]
 
@@ -146,6 +148,7 @@ model RoutineExerciseSet {
   targetReps        Int?
   targetWeightKg    Decimal?        @db.Decimal(6, 2)
   isWarmup          Boolean         @default(false)
+  isDropSet         Boolean         @default(false)
 
   @@index([routineExerciseId])
 }

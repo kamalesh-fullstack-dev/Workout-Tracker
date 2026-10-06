@@ -40,11 +40,13 @@ export async function saveRoutineAction(
               exerciseId: ex.exerciseId,
               order: index,
               restSeconds: ex.restSeconds ?? null,
+              groupId: ex.groupId ?? null,
               targetSets: {
                 create: ex.targetSets.map((s, setIndex) => ({
                   setNumber: setIndex + 1,
                   targetReps: s.targetReps ?? null,
                   targetWeightKg: s.targetWeightKg ?? null,
+                  isDropSet: s.isDropSet ?? false,
                 })),
               },
             })),
@@ -68,11 +70,13 @@ export async function saveRoutineAction(
           exerciseId: ex.exerciseId,
           order: index,
           restSeconds: ex.restSeconds ?? null,
+          groupId: ex.groupId ?? null,
           targetSets: {
             create: ex.targetSets.map((s, setIndex) => ({
               setNumber: setIndex + 1,
               targetReps: s.targetReps ?? null,
               targetWeightKg: s.targetWeightKg ?? null,
+              isDropSet: s.isDropSet ?? false,
             })),
           },
         })),
@@ -141,6 +145,7 @@ export async function saveWorkoutAsRoutineAction(
           exerciseId: se.exerciseId,
           order: index,
           restSeconds: se.restSeconds,
+          groupId: se.groupId,
           targetSets: {
             create:
               se.sets.length > 0
@@ -148,6 +153,7 @@ export async function saveWorkoutAsRoutineAction(
                     setNumber: setIndex + 1,
                     targetReps: s.reps,
                     targetWeightKg: s.weightKg,
+                    isDropSet: s.isDropSet,
                   }))
                 : [{ setNumber: 1, targetReps: null, targetWeightKg: null }],
           },
@@ -182,6 +188,7 @@ export async function startWorkoutFromRoutineAction(routineId: string) {
           exerciseId: ex.exerciseId,
           order: ex.order,
           restSeconds: ex.restSeconds,
+          groupId: ex.groupId,
         })),
       },
     },
