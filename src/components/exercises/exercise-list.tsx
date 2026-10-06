@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { X } from "lucide-react";
+import { Pencil, X } from "lucide-react";
 import { deleteExerciseAction } from "@/actions/exercises";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -66,15 +66,26 @@ export function ExerciseList({
                 {exercise.name}
               </Link>
               {canDelete && (
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  disabled={isPending}
-                  onClick={() => handleDelete(exercise.id)}
-                  aria-label={`Delete ${exercise.name}`}
-                >
-                  <X />
-                </Button>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    nativeButton={false}
+                    render={<Link href={`/exercises/${exercise.id}/edit`} />}
+                    aria-label={`Edit ${exercise.name}`}
+                  >
+                    <Pencil />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    disabled={isPending}
+                    onClick={() => handleDelete(exercise.id)}
+                    aria-label={`Delete ${exercise.name}`}
+                  >
+                    <X />
+                  </Button>
+                </div>
               )}
             </div>
             <div className="flex flex-wrap gap-1.5">

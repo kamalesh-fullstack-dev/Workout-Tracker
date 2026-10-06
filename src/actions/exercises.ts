@@ -32,6 +32,36 @@ export async function createExerciseAction(
   return { success: true };
 }
 
+export async function updateExerciseAction(
+  exerciseId: string,
+  values: CreateExerciseInput
+): Promise<ActionResult> {
+  const user = await requireUser();
+
+  const exercise = await db.exercise.findUnique({
+    where: { id: exerciseId },
+    select: { createdById: true, isCustom: true },
+  });
+
+  if (!exercise || !exercise.isCustom || exercise.createdById !== user.id) {
+    return { error: "You can only edit exercises you created." };
+  }
+
+  const parsed = createExerciseSchema.safeParse(values);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  await db.exercise.update({
+    where: { id: exerciseId },
+    data: parsed.data,
+  });
+
+  revalidatePath("/exercises");
+  revalidatePath(`/exercises/${exerciseId}`);
+  return { success: true };
+}
+
 export async function deleteExerciseAction(
   exerciseId: string
 ): Promise<ActionResult> {

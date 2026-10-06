@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Pencil } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/actions/auth";
 import { db } from "@/lib/db";
@@ -8,6 +10,7 @@ import {
   MUSCLE_GROUP_LABELS,
 } from "@/lib/validations/exercise";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { TrendChart } from "@/components/charts/trend-chart";
 
@@ -40,12 +43,27 @@ export default async function ExerciseDetailPage({
   ]);
   const recordsByType = new Map(records.map((r) => [r.type, r]));
 
+  const canEdit = exercise.isCustom && exercise.createdById === user.id;
+
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">
-          {exercise.name}
-        </h1>
+        <div className="flex items-start justify-between gap-2">
+          <h1 className="text-xl font-semibold tracking-tight">
+            {exercise.name}
+          </h1>
+          {canEdit && (
+            <Button
+              variant="outline"
+              size="sm"
+              nativeButton={false}
+              render={<Link href={`/exercises/${exercise.id}/edit`} />}
+            >
+              <Pencil />
+              Edit
+            </Button>
+          )}
+        </div>
         <div className="mt-2 flex flex-wrap gap-1.5">
           <Badge variant="outline" className="border-primary/50 text-primary">
             {EQUIPMENT_LABELS[exercise.equipment]}
