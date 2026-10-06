@@ -3,7 +3,7 @@ import { Dumbbell, Trophy } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { requireUser } from "@/actions/auth";
 import { db } from "@/lib/db";
-import { formatHistoryDate } from "@/lib/dates";
+import { formatHistoryDate, formatDuration } from "@/lib/dates";
 import { PR_TYPE_LABELS, type PRType } from "@/lib/pr-types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -124,6 +124,8 @@ export default async function DashboardPage() {
                     </span>
                     <span className="text-muted-foreground text-xs">
                       {s.exercises.length} exercises
+                      {s.completedAt &&
+                        ` · ${formatDuration(s.startedAt, s.completedAt)}`}
                     </span>
                   </div>
                 </Card>

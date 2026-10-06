@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireUser } from "@/actions/auth";
 import { db } from "@/lib/db";
-import { formatHistoryDate } from "@/lib/dates";
+import { formatHistoryDate, formatDuration } from "@/lib/dates";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DeleteWorkoutButton } from "@/components/workout/delete-workout-button";
@@ -70,6 +70,8 @@ export default async function HistoryPage() {
                   </p>
                   <p className="text-muted-foreground text-xs">
                     {setCount} sets · {Math.round(volumeKg).toLocaleString()} kg volume
+                    {session.completedAt &&
+                      ` · ${formatDuration(session.startedAt, session.completedAt)}`}
                   </p>
                 </Link>
                 <DeleteWorkoutButton sessionId={session.id} />

@@ -19,3 +19,16 @@ export const updateSetSchema = z.object({
 });
 
 export type UpdateSetInput = z.infer<typeof updateSetSchema>;
+
+export const updateSessionTimesSchema = z
+  .object({
+    sessionId: z.string().min(1),
+    startedAt: z.coerce.date(),
+    completedAt: z.coerce.date().optional().nullable(),
+  })
+  .refine(
+    (data) => !data.completedAt || data.completedAt >= data.startedAt,
+    { message: "Finish time can't be before the start time.", path: ["completedAt"] }
+  );
+
+export type UpdateSessionTimesInput = z.infer<typeof updateSessionTimesSchema>;

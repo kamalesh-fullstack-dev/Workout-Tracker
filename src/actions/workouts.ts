@@ -11,8 +11,10 @@ import { recomputeExercisePRs, type NewPR } from "@/lib/prs";
 import {
   logSetSchema,
   updateSetSchema,
+  updateSessionTimesSchema,
   type LogSetInput,
   type UpdateSetInput,
+  type UpdateSessionTimesInput,
 } from "@/lib/validations/workout";
 
 type ActionResult = { error: string } | { success: true };
@@ -298,6 +300,39 @@ export async function finishWorkoutAction(sessionId: string) {
 
   revalidatePath("/history");
   redirect(`/history`);
+}
+
+/**
+ * Corrects a session's recorded start/finish time — for when "Finish
+ * workout" was forgotten and only noticed later, so `completedAt` would
+ * otherwise be stamped with whatever moment it's fixed, not when the
+ * workout actually ended. Setting completedAt here also marks an
+ * in-progress session finished; clearing it reopens a finished one.
+ */
+export async function updateSessionTimesAction(
+  input: UpdateSessionTimesInput
+): Promise<ActionResult> {
+  const user = await requireUser();
+
+  const parsed = updateSessionTimesSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid times." };
+  }
+
+  await assertSessionOwnership(parsed.data.sessionId, user.id);
+
+  await db.workoutSession.update({
+    where: { id: parsed.data.sessionId },
+    data: {
+      startedAt: parsed.data.startedAt,
+      completedAt: parsed.data.completedAt ?? null,
+    },
+  });
+
+  revalidatePath(`/workout/${parsed.data.sessionId}`);
+  revalidatePath("/history");
+  revalidatePath("/dashboard");
+  return { success: true };
 }
 
 export async function deleteWorkoutSessionAction(

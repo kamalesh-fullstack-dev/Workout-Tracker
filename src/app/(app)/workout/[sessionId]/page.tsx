@@ -3,10 +3,13 @@ import { requireUser } from "@/actions/auth";
 import { db } from "@/lib/db";
 import { fetchSuggestionForExercise } from "@/actions/workouts";
 import { getLastSessionSets } from "@/lib/progress";
+import { formatDuration } from "@/lib/dates";
 import { ActiveWorkout } from "@/components/workout/active-workout";
 import { DeleteWorkoutButton } from "@/components/workout/delete-workout-button";
 import { SaveAsRoutineButton } from "@/components/workout/save-as-routine-button";
+import { EditSessionTimesButton } from "@/components/workout/edit-session-times-button";
 import { Badge } from "@/components/ui/badge";
+import { BackLink } from "@/components/nav/back-link";
 
 export default async function WorkoutSessionPage({
   params,
@@ -109,6 +112,7 @@ export default async function WorkoutSessionPage({
 
   return (
     <div className="mx-auto w-full max-w-2xl">
+      <BackLink href={isCompleted ? "/history" : "/dashboard"} />
       <div className="mb-4 flex items-center justify-between gap-2">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">
@@ -117,6 +121,8 @@ export default async function WorkoutSessionPage({
           {isCompleted && (
             <p className="text-muted-foreground text-sm">
               {new Date(session.startedAt).toLocaleString()}
+              {session.completedAt &&
+                ` · ${formatDuration(session.startedAt, session.completedAt)}`}
             </p>
           )}
         </div>
@@ -134,6 +140,11 @@ export default async function WorkoutSessionPage({
               }
             />
           )}
+          <EditSessionTimesButton
+            sessionId={session.id}
+            startedAt={session.startedAt.toISOString()}
+            completedAt={session.completedAt?.toISOString() ?? null}
+          />
           <DeleteWorkoutButton sessionId={session.id} />
         </div>
       </div>
