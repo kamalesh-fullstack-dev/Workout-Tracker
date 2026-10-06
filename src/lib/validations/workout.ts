@@ -6,6 +6,7 @@ export const logSetSchema = z.object({
   reps: z.coerce.number().int().min(1).max(999),
   rpe: z.coerce.number().min(1).max(10).optional().nullable(),
   isWarmup: z.boolean().optional().default(false),
+  isDropSet: z.boolean().optional().default(false),
 });
 
 export type LogSetInput = z.infer<typeof logSetSchema>;

@@ -87,6 +87,75 @@ export async function addExerciseToSessionAction(
   return { success: true, sessionExerciseId: sessionExercise.id };
 }
 
+export async function groupExercisesAction(
+  sessionExerciseIds: string[]
+): Promise<ActionResult> {
+  const user = await requireUser();
+
+  if (sessionExerciseIds.length < 2) {
+    return { error: "Pick at least two exercises to group." };
+  }
+
+  const rows = await db.sessionExercise.findMany({
+    where: { id: { in: sessionExerciseIds } },
+    select: {
+      id: true,
+      workoutSessionId: true,
+      workoutSession: { select: { userId: true } },
+    },
+  });
+
+  const sessionId = rows[0]?.workoutSession.userId === user.id
+    ? rows[0].workoutSessionId
+    : null;
+  const allValid =
+    rows.length === sessionExerciseIds.length &&
+    sessionId !== null &&
+    rows.every(
+      (r) => r.workoutSession.userId === user.id && r.workoutSessionId === sessionId
+    );
+
+  if (!allValid || !sessionId) {
+    return { error: "Exercises not found in this workout." };
+  }
+
+  const groupId = crypto.randomUUID();
+  await db.sessionExercise.updateMany({
+    where: { id: { in: sessionExerciseIds } },
+    data: { groupId },
+  });
+
+  revalidatePath(`/workout/${sessionId}`);
+  return { success: true };
+}
+
+export async function ungroupExercisesAction(
+  sessionExerciseId: string
+): Promise<ActionResult> {
+  const user = await requireUser();
+  const sessionExercise = await getSessionIdForSessionExercise(sessionExerciseId);
+
+  if (!sessionExercise || sessionExercise.workoutSession.userId !== user.id) {
+    return { error: "Exercise not found in this workout." };
+  }
+
+  const current = await db.sessionExercise.findUnique({
+    where: { id: sessionExerciseId },
+    select: { groupId: true },
+  });
+  if (!current?.groupId) {
+    return { success: true };
+  }
+
+  await db.sessionExercise.updateMany({
+    where: { groupId: current.groupId, workoutSessionId: sessionExercise.workoutSessionId },
+    data: { groupId: null },
+  });
+
+  revalidatePath(`/workout/${sessionExercise.workoutSessionId}`);
+  return { success: true };
+}
+
 export async function removeExerciseFromSessionAction(
   sessionExerciseId: string
 ): Promise<ActionResult> {
@@ -134,15 +203,17 @@ export async function logSetAction(input: LogSetInput): Promise<SetActionResult>
       reps: parsed.data.reps,
       rpe: parsed.data.rpe ?? null,
       isWarmup: parsed.data.isWarmup ?? false,
+      isDropSet: parsed.data.isDropSet ?? false,
       isCompleted: true,
       completedAt: new Date(),
       estimated1RM: estimatedOneRepMax(parsed.data.weightKg, parsed.data.reps),
     },
   });
 
-  const newPRs = parsed.data.isWarmup
-    ? []
-    : await recomputeExercisePRs(user.id, sessionExercise.exerciseId);
+  const newPRs =
+    parsed.data.isWarmup || parsed.data.isDropSet
+      ? []
+      : await recomputeExercisePRs(user.id, sessionExercise.exerciseId);
 
   revalidatePath(`/workout/${sessionExercise.workoutSessionId}`);
   revalidatePath("/prs");
@@ -165,6 +236,7 @@ export async function updateSetAction(
       userId: true,
       exerciseId: true,
       isWarmup: true,
+      isDropSet: true,
       sessionExercise: { select: { workoutSessionId: true } },
     },
   });
@@ -182,9 +254,10 @@ export async function updateSetAction(
     },
   });
 
-  const newPRs = set.isWarmup
-    ? []
-    : await recomputeExercisePRs(user.id, set.exerciseId);
+  const newPRs =
+    set.isWarmup || set.isDropSet
+      ? []
+      : await recomputeExercisePRs(user.id, set.exerciseId);
 
   revalidatePath(`/workout/${set.sessionExercise.workoutSessionId}`);
   revalidatePath("/prs");
@@ -292,6 +365,7 @@ export async function fetchSuggestionForExercise(
       reps: true,
       rpe: true,
       isWarmup: true,
+      isDropSet: true,
       completedAt: true,
     },
   });
@@ -304,6 +378,7 @@ export async function fetchSuggestionForExercise(
       reps: s.reps,
       rpe: s.rpe ? Number(s.rpe) : null,
       isWarmup: s.isWarmup,
+      isDropSet: s.isDropSet,
       completedAt: s.completedAt as Date,
     }));
 

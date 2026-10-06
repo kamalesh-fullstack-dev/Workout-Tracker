@@ -81,7 +81,13 @@ export async function getExerciseProgressData(
   exerciseId: string
 ): Promise<ProgressPoint[]> {
   const sets = await db.setEntry.findMany({
-    where: { userId, exerciseId, isWarmup: false, isCompleted: true },
+    where: {
+      userId,
+      exerciseId,
+      isWarmup: false,
+      isDropSet: false,
+      isCompleted: true,
+    },
     select: {
       weightKg: true,
       reps: true,

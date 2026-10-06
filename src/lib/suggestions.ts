@@ -11,6 +11,7 @@ export type SetHistoryEntry = {
   reps: number;
   rpe: number | null;
   isWarmup: boolean;
+  isDropSet?: boolean;
   completedAt: Date;
 };
 
@@ -87,7 +88,7 @@ export function getSuggestion(
   options: { equipment: Equipment; routineTarget?: RoutineTargetHint }
 ): Suggestion {
   const workingSets = history
-    .filter((s) => !s.isWarmup)
+    .filter((s) => !s.isWarmup && !s.isDropSet)
     .slice()
     .sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
 

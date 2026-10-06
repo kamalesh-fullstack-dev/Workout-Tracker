@@ -176,6 +176,8 @@ model SessionExercise {
   order            Int
   restSeconds      Int?
   notes            String?
+  // Shared by every exercise in the same superset/circuit; null if standalone.
+  groupId          String?
 
   sets SetEntry[]
 
@@ -199,6 +201,7 @@ model SetEntry {
   reps         Int
   rpe          Decimal?  @db.Decimal(3, 1)
   isWarmup     Boolean   @default(false)
+  isDropSet    Boolean   @default(false)
   isCompleted  Boolean   @default(false)
   completedAt  DateTime?
   estimated1RM Decimal?  @db.Decimal(6, 2)

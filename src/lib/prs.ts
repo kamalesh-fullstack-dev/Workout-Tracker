@@ -47,7 +47,13 @@ export async function recomputeExercisePRs(
 ): Promise<NewPR[]> {
   const [sets, existing] = await Promise.all([
     db.setEntry.findMany({
-      where: { userId, exerciseId, isWarmup: false, isCompleted: true },
+      where: {
+        userId,
+        exerciseId,
+        isWarmup: false,
+        isDropSet: false,
+        isCompleted: true,
+      },
       select: {
         id: true,
         weightKg: true,

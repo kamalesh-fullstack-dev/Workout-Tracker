@@ -40,6 +40,7 @@ export default async function WorkoutSessionPage({
     exerciseId: se.exerciseId,
     exerciseName: se.exercise.name,
     restSeconds: se.restSeconds,
+    groupId: se.groupId,
     sets: se.sets.map((s) => ({
       id: s.id,
       setNumber: s.setNumber,
@@ -47,6 +48,7 @@ export default async function WorkoutSessionPage({
       reps: s.reps,
       rpe: s.rpe ? Number(s.rpe) : null,
       isWarmup: s.isWarmup,
+      isDropSet: s.isDropSet,
     })),
   }));
 

@@ -19,8 +19,16 @@ export type SetItem = {
   reps: number;
   rpe: number | null;
   isWarmup: boolean;
+  isDropSet: boolean;
   pending?: boolean;
 };
+
+/** Bumps a numeric string input by delta, clamped to >= 0, trimmed of float noise. */
+function bump(current: string, delta: number): string {
+  const num = Number(current) || 0;
+  const next = Math.max(0, Math.round((num + delta) * 100) / 100);
+  return String(next);
+}
 
 function SetRow({
   set,
@@ -115,6 +123,11 @@ function SetRow({
             Warmup
           </Badge>
         ) : null}
+        {set.isDropSet ? (
+          <Badge variant="outline" className="border-primary/50 text-primary ml-2">
+            Drop set
+          </Badge>
+        ) : null}
       </span>
       <Button
         type="button"
@@ -165,6 +178,7 @@ export function ExerciseBlock({
     reps: number;
     rpe: number | null;
     isWarmup: boolean;
+    isDropSet: boolean;
   }) => void;
   onDeleteSet: (setId: string) => void;
   onUpdateSet: (
@@ -190,6 +204,7 @@ export function ExerciseBlock({
   );
   const [rpe, setRpe] = useState("");
   const [isWarmup, setIsWarmup] = useState(false);
+  const [isDropSet, setIsDropSet] = useState(false);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -203,8 +218,10 @@ export function ExerciseBlock({
       reps: repsNum,
       rpe: rpe ? Number(rpe) : null,
       isWarmup,
+      isDropSet,
     });
     setIsWarmup(false);
+    setIsDropSet(false);
   }
 
   const lastLoggedSet = sets[sets.length - 1];
@@ -355,19 +372,63 @@ export function ExerciseBlock({
                 />
               </div>
             </div>
-            <div className="flex items-center justify-between gap-2">
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-muted-foreground mr-0.5 text-xs">Weight</span>
+              {[-5, -2.5, 2.5, 5].map((delta) => (
+                <Button
+                  key={delta}
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  disabled={disabled}
+                  onClick={() => setWeight((w) => bump(w, delta))}
+                >
+                  {delta > 0 ? `+${delta}` : delta}
+                </Button>
+              ))}
+              <span className="text-muted-foreground mr-0.5 ml-2 text-xs">Reps</span>
+              {[-1, 1].map((delta) => (
+                <Button
+                  key={delta}
+                  type="button"
+                  variant="outline"
+                  size="xs"
+                  disabled={disabled}
+                  onClick={() => setReps((r) => bump(r, delta))}
+                >
+                  {delta > 0 ? `+${delta}` : delta}
+                </Button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4">
               <Label className="flex items-center gap-2 text-sm font-normal">
                 <Checkbox
                   checked={isWarmup}
-                  onCheckedChange={(checked) => setIsWarmup(checked === true)}
+                  onCheckedChange={(checked) => {
+                    setIsWarmup(checked === true);
+                    if (checked === true) setIsDropSet(false);
+                  }}
                   disabled={disabled}
                 />
                 Warmup set
               </Label>
-              <Button type="submit" size="lg" className="h-12 flex-1" disabled={disabled}>
-                Log set
-              </Button>
+              <Label className="flex items-center gap-2 text-sm font-normal">
+                <Checkbox
+                  checked={isDropSet}
+                  onCheckedChange={(checked) => {
+                    setIsDropSet(checked === true);
+                    if (checked === true) setIsWarmup(false);
+                  }}
+                  disabled={disabled}
+                />
+                Drop set
+              </Label>
             </div>
+            <Button type="submit" size="lg" className="h-12 w-full" disabled={disabled}>
+              Log set
+            </Button>
           </form>
         </>
       )}
