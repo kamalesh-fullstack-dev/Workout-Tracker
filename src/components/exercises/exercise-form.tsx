@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { createExerciseAction, updateExerciseAction } from "@/actions/exercises";
+import { BackLink } from "@/components/nav/back-link";
 import {
   createExerciseSchema,
   type CreateExerciseInput,
@@ -95,6 +96,9 @@ export function ExerciseForm(props: ExerciseFormProps) {
 
   return (
     <div className="mx-auto w-full max-w-lg">
+      <BackLink
+        href={mode === "edit" ? `/exercises/${props.exerciseId}` : "/exercises"}
+      />
       <Card>
         <CardHeader>
           <CardTitle>{mode === "edit" ? "Edit exercise" : "New exercise"}</CardTitle>

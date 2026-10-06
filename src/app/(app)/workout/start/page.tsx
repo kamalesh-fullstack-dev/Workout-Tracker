@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { BackLink } from "@/components/nav/back-link";
 
 export default async function StartWorkoutPage() {
   const user = await requireUser();
@@ -22,7 +23,9 @@ export default async function StartWorkoutPage() {
   });
 
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-4">
+    <div className="flex flex-1 flex-col">
+      <BackLink href="/dashboard" />
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-4">
       {routines.length > 0 && (
         <div className="flex flex-col gap-3">
           <h2 className="text-muted-foreground text-sm font-medium">
@@ -76,6 +79,7 @@ export default async function StartWorkoutPage() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

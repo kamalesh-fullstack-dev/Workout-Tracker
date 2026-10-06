@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { TrendChart } from "@/components/charts/trend-chart";
+import { BackLink } from "@/components/nav/back-link";
 
 function formatPRValue(type: PRType, value: number) {
   return type === "MAX_REPS" ? `${value} reps` : `${value} kg`;
@@ -47,6 +48,7 @@ export default async function ExerciseDetailPage({
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+      <BackLink href="/exercises" />
       <div>
         <div className="flex items-start justify-between gap-2">
           <h1 className="text-xl font-semibold tracking-tight">
