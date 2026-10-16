@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { searchExercisesForPickerAction } from "@/actions/workouts";
+import { quickCreateExerciseAction } from "@/actions/exercises";
 import { EQUIPMENT_LABELS } from "@/lib/validations/exercise";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +31,7 @@ export function ExercisePickerDialog({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<PickerExercise[]>([]);
   const [isPending, startTransition] = useTransition();
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -46,6 +49,30 @@ export function ExercisePickerDialog({
     setOpen(false);
     setQuery("");
   }
+
+  async function handleQuickCreate() {
+    setIsCreating(true);
+    const result = await quickCreateExerciseAction(query);
+    setIsCreating(false);
+
+    if ("error" in result) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success(
+      result.existed
+        ? `"${result.exercise.name}" already exists — added it`
+        : `Added "${result.exercise.name}" to your library`
+    );
+    handleSelect({
+      ...result.exercise,
+      equipment: result.exercise.equipment as PickerExercise["equipment"],
+    });
+  }
+
+  const hasExactMatch = results.some(
+    (r) => r.name.trim().toLowerCase() === query.trim().toLowerCase()
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -73,7 +100,7 @@ export function ExercisePickerDialog({
               Searching...
             </p>
           )}
-          {!isPending && results.length === 0 && (
+          {!isPending && results.length === 0 && query.trim().length < 2 && (
             <p className="text-muted-foreground py-4 text-center text-sm">
               No exercises found.
             </p>
@@ -95,6 +122,20 @@ export function ExercisePickerDialog({
             ))}
           </ul>
         </div>
+        {!isPending && query.trim().length >= 2 && !hasExactMatch && (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            disabled={isCreating}
+            onClick={handleQuickCreate}
+          >
+            <Plus />
+            {isCreating
+              ? "Adding..."
+              : `Add "${query.trim()}" as a new exercise`}
+          </Button>
+        )}
       </DialogContent>
     </Dialog>
   );
