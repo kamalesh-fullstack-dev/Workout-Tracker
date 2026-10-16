@@ -1,7 +1,7 @@
 import { requireUser } from "@/actions/auth";
 import { db } from "@/lib/db";
-import { getExerciseProgressData } from "@/lib/progress";
-import { ProgressExplorer } from "@/components/charts/progress-explorer";
+import { getExerciseProgressData, getOverallProgressData } from "@/lib/progress";
+import { ProgressTabs } from "@/components/charts/progress-tabs";
 
 export default async function ProgressPage() {
   const user = await requireUser();
@@ -52,12 +52,15 @@ export default async function ProgressPage() {
     e.sessionCount > best.sessionCount ? e : best
   );
 
-  const initialData = await getExerciseProgressData(user.id, defaultExercise.id);
+  const [initialData, overall] = await Promise.all([
+    getExerciseProgressData(user.id, defaultExercise.id),
+    getOverallProgressData(user.id),
+  ]);
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
-      <h1 className="text-xl font-semibold tracking-tight">Progress</h1>
-      <ProgressExplorer
+    <div className="mx-auto w-full max-w-2xl">
+      <ProgressTabs
+        overall={overall}
         exercises={exercises}
         initialExerciseId={defaultExercise.id}
         initialData={initialData}

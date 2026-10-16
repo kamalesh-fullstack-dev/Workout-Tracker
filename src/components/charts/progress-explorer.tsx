@@ -69,6 +69,15 @@ export function ProgressExplorer({
           <h2 className="text-sm font-medium">Session volume</h2>
           <TrendChart data={data} dataKey="volume" unit="kg" color="var(--chart-2)" />
         </Card>
+        <Card className="gap-2 p-4">
+          <h2 className="text-sm font-medium">Sets progression</h2>
+          <TrendChart
+            data={data}
+            dataKey="setCount"
+            unit="sets"
+            color="var(--chart-3)"
+          />
+        </Card>
       </div>
     </div>
   );
