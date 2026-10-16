@@ -20,6 +20,14 @@ function relativeDate(date: Date) {
   return `${months} month${months === 1 ? "" : "s"} ago`;
 }
 
+function isSameDay(a: Date, b: Date) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
 export default async function PRsPage({
   searchParams,
 }: {
@@ -57,7 +65,16 @@ export default async function PRsPage({
     );
   }
 
-  const recent = records.slice(0, 5);
+  // All PRs from the most recent day something was achieved — not a fixed
+  // count — so a big session that lands several PRs at once doesn't get any
+  // of them bumped off the list.
+  const mostRecentAchievedAt = records[0]?.achievedAt;
+  const recent = mostRecentAchievedAt
+    ? records.filter((r) => isSameDay(r.achievedAt, mostRecentAchievedAt))
+    : [];
+  const recentLabel = mostRecentAchievedAt
+    ? `PRs from ${relativeDate(mostRecentAchievedAt)}`
+    : "Recently achieved";
 
   const byExercise = new Map<
     string,
@@ -90,7 +107,7 @@ export default async function PRsPage({
           {!q && (
             <div className="flex flex-col gap-2">
               <h2 className="text-muted-foreground text-sm font-medium">
-                Recently achieved
+                {recentLabel}
               </h2>
               <div className="flex flex-col gap-2">
                 {recent.map((record) => (
