@@ -487,7 +487,7 @@ export function RoutineBuilder({
 
       <div
         className="bg-card/80 border-border fixed inset-x-0 bottom-0 z-20 border-t p-4 shadow-2xl backdrop-blur-xl"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}
+        style={{ paddingBottom: "calc(max(env(safe-area-inset-bottom), 12px) + 1rem)" }}
       >
         <div className="mx-auto flex max-w-2xl justify-end">
           <Button size="lg" className="h-12" disabled={isSaving} onClick={handleSave}>

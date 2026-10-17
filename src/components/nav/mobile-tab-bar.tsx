@@ -44,7 +44,7 @@ export function MobileTabBar() {
   return (
     <nav
       className="bg-card/90 border-border fixed inset-x-0 bottom-0 z-20 flex items-stretch justify-between border-t px-1 shadow-2xl backdrop-blur-xl sm:hidden"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      style={{ paddingBottom: "max(env(safe-area-inset-bottom), 12px)" }}
     >
       {TAB_LINKS.map((link) => {
         const isActive =
