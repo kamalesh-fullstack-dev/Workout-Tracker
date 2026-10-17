@@ -70,6 +70,13 @@ enum MeasurementType {
   CALF
 }
 
+enum MealSlot {
+  MORNING
+  AFTERNOON
+  EVENING
+  NIGHT
+}
+
 model User {
   id             String         @id @default(cuid())
   email          String         @unique
@@ -78,6 +85,10 @@ model User {
   unitPreference UnitPreference @default(KG)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+  // When this user first saw the meal tracker — the clean streak is bounded
+  // by this, not createdAt, since days before the feature existed were
+  // never actually tracked and shouldn't count as "clean".
+  mealTrackingStartedAt DateTime?
 
   exercises       Exercise[]        @relation("UserExercises")
   routines        RoutineTemplate[]
@@ -85,6 +96,7 @@ model User {
   bodyMetrics     BodyMetricEntry[]
   measurements    BodyMeasurement[]
   personalRecords PersonalRecord[]
+  cheatMeals      CheatMeal[]
 }
 
 model Exercise {
@@ -251,4 +263,20 @@ model BodyMeasurement {
   valueCm Decimal         @db.Decimal(6, 2)
 
   @@index([userId, type, date])
+}
+
+// A day is a "cheat day" the moment any one of its four meal slots is
+// marked here — presence of a row for (date, slot) means that meal was a
+// cheat; nothing is stored for clean meals.
+model CheatMeal {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+  slot      MealSlot
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date, slot])
+  @@index([userId, date])
 }

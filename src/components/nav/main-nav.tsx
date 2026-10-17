@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { href: "/progress", label: "Progress" },
   { href: "/exercises", label: "Exercises" },
   { href: "/body-metrics", label: "Body" },
+  { href: "/meals", label: "Meals" },
 ];
 
 export function MainNav() {

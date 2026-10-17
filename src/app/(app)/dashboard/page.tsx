@@ -1,12 +1,14 @@
 import Link from "next/link";
-import { Dumbbell, Trophy } from "lucide-react";
+import { Dumbbell, Flame, Trophy } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { requireUser } from "@/actions/auth";
 import { db } from "@/lib/db";
 import { formatHistoryDate, formatDuration } from "@/lib/dates";
 import { PR_TYPE_LABELS, type PRType } from "@/lib/pr-types";
+import { getCleanStreak, todayISO } from "@/lib/meals";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { MealSlotToggles } from "@/components/meals/meal-slot-toggles";
 
 function formatPRValue(type: PRType, value: number) {
   return type === "MAX_REPS" ? `${value} reps` : `${value} kg`;
@@ -37,6 +39,15 @@ export default async function DashboardPage() {
     take: 3,
     include: { exercise: { select: { name: true } } },
   });
+
+  const today = todayISO();
+  const [streak, todayCheatMeals] = await Promise.all([
+    getCleanStreak(user.id),
+    db.cheatMeal.findMany({
+      where: { userId: user.id, date: new Date(today) },
+      select: { slot: true, note: true },
+    }),
+  ]);
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
@@ -80,6 +91,25 @@ export default async function DashboardPage() {
           }
         />
       )}
+
+      <Card className="gap-3 p-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Flame className="text-primary size-5 shrink-0" />
+            <span className="font-heading text-lg">
+              {streak} day{streak === 1 ? "" : "s"}
+            </span>
+            <span className="text-muted-foreground text-sm">clean</span>
+          </div>
+          <Link
+            href="/meals"
+            className="text-muted-foreground text-xs underline underline-offset-4"
+          >
+            View log
+          </Link>
+        </div>
+        <MealSlotToggles date={today} cheatMeals={todayCheatMeals} />
+      </Card>
 
       {recentPRs.length > 0 && (
         <div className="flex flex-col gap-2">
