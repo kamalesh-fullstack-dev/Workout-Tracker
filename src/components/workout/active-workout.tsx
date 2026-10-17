@@ -525,7 +525,7 @@ export function ActiveWorkout({
 
       <div
         className="bg-card/80 border-border fixed inset-x-0 bottom-0 z-20 border-t p-4 shadow-2xl backdrop-blur-xl"
-        style={{ paddingBottom: "calc(max(env(safe-area-inset-bottom), 24px) + 1rem)" }}
+        style={{ paddingBottom: "calc(max(env(safe-area-inset-bottom), 12px) + 1rem)" }}
       >
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
           <span className="text-muted-foreground text-sm">
