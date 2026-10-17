@@ -60,7 +60,7 @@ export function TrendChart({ data, dataKey, unit, color }: TrendChartProps) {
 
   return (
     <ResponsiveContainer width="100%" height={200}>
-      <LineChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+      <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
         <CartesianGrid
           strokeDasharray="3 3"
           stroke="var(--border)"
@@ -78,7 +78,7 @@ export function TrendChart({ data, dataKey, unit, color }: TrendChartProps) {
           tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
-          width={40}
+          width={48}
         />
         <Tooltip content={<TrendTooltip unit={unit} />} />
         <Line
