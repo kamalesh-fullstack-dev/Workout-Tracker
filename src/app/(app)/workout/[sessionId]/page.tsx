@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
+import { Repeat } from "lucide-react";
 import { requireUser } from "@/actions/auth";
 import { db } from "@/lib/db";
-import { fetchSuggestionForExercise } from "@/actions/workouts";
+import { fetchSuggestionForExercise, repeatWorkoutAction } from "@/actions/workouts";
 import { getLastSessionSets } from "@/lib/progress";
 import { formatDuration } from "@/lib/dates";
 import { ActiveWorkout } from "@/components/workout/active-workout";
@@ -9,6 +10,7 @@ import { DeleteWorkoutButton } from "@/components/workout/delete-workout-button"
 import { SaveAsRoutineButton } from "@/components/workout/save-as-routine-button";
 import { EditSessionTimesButton } from "@/components/workout/edit-session-times-button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { BackLink } from "@/components/nav/back-link";
 
 export default async function WorkoutSessionPage({
@@ -128,6 +130,18 @@ export default async function WorkoutSessionPage({
         </div>
         <div className="flex items-center gap-2">
           {isCompleted && <Badge variant="secondary">Finished</Badge>}
+          {isCompleted && session.exercises.length > 0 && (
+            <form action={repeatWorkoutAction.bind(null, session.id)}>
+              <Button
+                type="submit"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Repeat this workout"
+              >
+                <Repeat />
+              </Button>
+            </form>
+          )}
           {session.exercises.length > 0 && (
             <SaveAsRoutineButton
               sessionId={session.id}

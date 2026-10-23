@@ -34,6 +34,47 @@ export async function startWorkoutAction() {
   redirect(`/workout/${session.id}`);
 }
 
+/**
+ * Starts a new workout pre-loaded with the same exercises (same order,
+ * rest times, and superset/circuit groupings) as a past one — no sets,
+ * just the exercise list, ready to log fresh. A quicker path than saving
+ * the old workout as a routine first just to start one more session.
+ */
+export async function repeatWorkoutAction(sessionId: string) {
+  const user = await requireUser();
+
+  const source = await db.workoutSession.findUnique({
+    where: { id: sessionId },
+    select: {
+      userId: true,
+      exercises: {
+        orderBy: { order: "asc" },
+        select: { exerciseId: true, order: true, restSeconds: true, groupId: true },
+      },
+    },
+  });
+  if (!source || source.userId !== user.id) {
+    throw new Error("Workout not found.");
+  }
+
+  const session = await db.workoutSession.create({
+    data: {
+      userId: user.id,
+      exercises: {
+        create: source.exercises.map((se) => ({
+          exerciseId: se.exerciseId,
+          order: se.order,
+          restSeconds: se.restSeconds,
+          groupId: se.groupId,
+        })),
+      },
+    },
+    select: { id: true },
+  });
+
+  redirect(`/workout/${session.id}`);
+}
+
 async function assertSessionOwnership(sessionId: string, userId: string) {
   const session = await db.workoutSession.findUnique({
     where: { id: sessionId },

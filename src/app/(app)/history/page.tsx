@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { Repeat } from "lucide-react";
 import { requireUser } from "@/actions/auth";
 import { db } from "@/lib/db";
+import { repeatWorkoutAction } from "@/actions/workouts";
 import { formatHistoryDate, formatDuration } from "@/lib/dates";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { DeleteWorkoutButton } from "@/components/workout/delete-workout-button";
 
 export default async function HistoryPage() {
@@ -74,7 +77,19 @@ export default async function HistoryPage() {
                       ` · ${formatDuration(session.startedAt, session.completedAt)}`}
                   </p>
                 </Link>
-                <DeleteWorkoutButton sessionId={session.id} />
+                <div className="flex shrink-0 items-center gap-1">
+                  <form action={repeatWorkoutAction.bind(null, session.id)}>
+                    <Button
+                      type="submit"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label="Repeat this workout"
+                    >
+                      <Repeat />
+                    </Button>
+                  </form>
+                  <DeleteWorkoutButton sessionId={session.id} />
+                </div>
               </div>
             </Card>
           );
