@@ -1,9 +1,8 @@
 import { Flag } from "lucide-react";
 import { auth } from "@/lib/auth";
-import { signOutAction } from "@/actions/auth";
-import { Button } from "@/components/ui/button";
 import { MainNav } from "@/components/nav/main-nav";
 import { MobileTabBar } from "@/components/nav/mobile-tab-bar";
+import { SignOutButton } from "@/components/nav/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function AppLayout({
@@ -29,11 +28,7 @@ export default async function AppLayout({
               {session?.user?.email}
             </span>
             <ThemeToggle />
-            <form action={signOutAction}>
-              <Button type="submit" variant="outline" size="sm">
-                Sign out
-              </Button>
-            </form>
+            <SignOutButton />
           </div>
         </div>
         <MainNav />

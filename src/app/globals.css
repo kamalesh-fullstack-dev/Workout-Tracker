@@ -158,6 +158,27 @@
   font-family: var(--font-sans) !important;
 }
 
+.animate-slide-down-in {
+  animation: slide-down-in 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes slide-down-in {
+  from {
+    transform: translateY(-120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-slide-down-in {
+    animation-duration: 0s;
+  }
+}
+
 .app-aurora {
   position: fixed;
   inset: 0;

@@ -50,67 +50,69 @@ export default function LoginPage() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Log in</CardTitle>
-        <CardDescription>
-          Welcome back. Enter your details to continue.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="grid gap-4"
-          >
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      autoComplete="email"
-                      placeholder="you@example.com"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      autoComplete="current-password"
-                      placeholder="••••••••"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" size="lg" disabled={isSubmitting} className="mt-2">
-              {isSubmitting ? "Logging in..." : "Log in"}
-            </Button>
-          </form>
-        </Form>
-        <p className="text-muted-foreground mt-6 text-center text-sm">
-          Don&apos;t have an account?{" "}
-          <Link href="/register" className="text-foreground underline underline-offset-4">
-            Sign up
-          </Link>
-        </p>
-      </CardContent>
-    </Card>
+    <div className="animate-slide-down-in">
+      <Card>
+        <CardHeader>
+          <CardTitle>Log in</CardTitle>
+          <CardDescription>
+            Welcome back. Enter your details to continue.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="grid gap-4"
+            >
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        autoComplete="email"
+                        placeholder="you@example.com"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        autoComplete="current-password"
+                        placeholder="••••••••"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" size="lg" disabled={isSubmitting} className="mt-2">
+                {isSubmitting ? "Logging in..." : "Log in"}
+              </Button>
+            </form>
+          </Form>
+          <p className="text-muted-foreground mt-6 text-center text-sm">
+            Don&apos;t have an account?{" "}
+            <Link href="/register" className="text-foreground underline underline-offset-4">
+              Sign up
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
