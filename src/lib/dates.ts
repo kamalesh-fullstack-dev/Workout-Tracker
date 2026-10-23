@@ -1,3 +1,8 @@
+/** A Date `days` ago from now. */
+export function daysAgo(days: number): Date {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+}
+
 /** "5 Oct 2026, Mon" — day-first with the weekday trailing, not locale-ordered. */
 export function formatHistoryDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;

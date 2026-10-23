@@ -1,35 +1,67 @@
 import Link from "next/link";
+import type { Prisma } from "@prisma/client";
 import { Repeat } from "lucide-react";
 import { requireUser } from "@/actions/auth";
 import { db } from "@/lib/db";
 import { repeatWorkoutAction } from "@/actions/workouts";
-import { formatHistoryDate, formatDuration } from "@/lib/dates";
+import { formatHistoryDate, formatDuration, daysAgo } from "@/lib/dates";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DeleteWorkoutButton } from "@/components/workout/delete-workout-button";
+import { HistoryFilters } from "@/components/history/history-filters";
 
-export default async function HistoryPage() {
+export default async function HistoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; range?: string }>;
+}) {
   const user = await requireUser();
+  const { q, range } = await searchParams;
 
-  const sessions = await db.workoutSession.findMany({
-    where: { userId: user.id, completedAt: { not: null } },
-    orderBy: { startedAt: "desc" },
-    include: {
-      exercises: {
-        select: {
-          exercise: { select: { name: true } },
-          sets: { select: { weightKg: true, reps: true } },
+  const isAllTime = range === "all";
+  const rangeDays = isAllTime ? null : Number(range ?? "7");
+
+  const where: Prisma.WorkoutSessionWhereInput = {
+    userId: user.id,
+    completedAt: { not: null },
+    ...(q
+      ? { exercises: { some: { exercise: { name: { contains: q, mode: "insensitive" } } } } }
+      : {}),
+    ...(rangeDays ? { startedAt: { gte: daysAgo(rangeDays) } } : {}),
+  };
+
+  const [sessions, totalCompletedCount] = await Promise.all([
+    db.workoutSession.findMany({
+      where,
+      orderBy: { startedAt: "desc" },
+      include: {
+        exercises: {
+          select: {
+            exercise: { select: { name: true } },
+            sets: { select: { weightKg: true, reps: true } },
+          },
         },
       },
-    },
-  });
+    }),
+    db.workoutSession.count({
+      where: { userId: user.id, completedAt: { not: null } },
+    }),
+  ]);
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
       <h1 className="text-xl font-semibold tracking-tight">History</h1>
 
-      {sessions.length === 0 && (
+      <HistoryFilters />
+
+      {sessions.length === 0 && totalCompletedCount > 0 && (
+        <p className="text-muted-foreground py-12 text-center text-sm">
+          No workouts match your filters. Try widening the date range.
+        </p>
+      )}
+
+      {totalCompletedCount === 0 && (
         <p className="text-muted-foreground py-12 text-center text-sm">
           No finished workouts yet.{" "}
           <Link href="/workout/start" className="text-foreground underline underline-offset-4">
