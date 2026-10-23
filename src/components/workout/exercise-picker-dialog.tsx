@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { searchExercisesForPickerAction } from "@/actions/workouts";
@@ -30,18 +30,29 @@ export function ExercisePickerDialog({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<PickerExercise[]>([]);
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     if (!open) return;
-    const handle = setTimeout(() => {
-      startTransition(async () => {
-        const data = await searchExercisesForPickerAction(query);
+    // Responses can arrive out of order — e.g. the empty-query search fired
+    // on open can still be in flight (slower, since it fetches the default
+    // unfiltered list) when a subsequent real query's response comes back
+    // first. Without this guard, the late empty-query response would
+    // silently overwrite the correct, already-rendered results.
+    let ignore = false;
+    const handle = setTimeout(async () => {
+      setIsPending(true);
+      const data = await searchExercisesForPickerAction(query);
+      if (!ignore) {
         setResults(data);
-      });
+        setIsPending(false);
+      }
     }, 200);
-    return () => clearTimeout(handle);
+    return () => {
+      ignore = true;
+      clearTimeout(handle);
+    };
   }, [query, open]);
 
   function handleSelect(exercise: PickerExercise) {
