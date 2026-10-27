@@ -1,9 +1,11 @@
-import { Flag } from "lucide-react";
+import Link from "next/link";
+import { Flag, Settings } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { MainNav } from "@/components/nav/main-nav";
 import { MobileTabBar } from "@/components/nav/mobile-tab-bar";
 import { SignOutButton } from "@/components/nav/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
 
 export default async function AppLayout({
   children,
@@ -27,6 +29,15 @@ export default async function AppLayout({
             <span className="text-muted-foreground hidden text-sm sm:inline">
               {session?.user?.email}
             </span>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Settings"
+              nativeButton={false}
+              render={<Link href="/settings" />}
+            >
+              <Settings />
+            </Button>
             <ThemeToggle />
             <SignOutButton />
           </div>
