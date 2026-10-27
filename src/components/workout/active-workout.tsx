@@ -16,7 +16,7 @@ import {
   updateSetAction,
 } from "@/actions/workouts";
 import type { Suggestion } from "@/lib/suggestions";
-import type { LastSessionSet } from "@/lib/progress";
+import type { LastSessionSet, WeightRepPR } from "@/lib/progress";
 import { PR_TYPE_LABELS, type NewPR } from "@/lib/pr-types";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -42,6 +42,7 @@ export type ExerciseBlockData = {
   sets: SetItem[];
   suggestion?: Suggestion | null;
   lastSessionSets?: LastSessionSet[];
+  weightPRs?: WeightRepPR[];
   groupId?: string | null;
   pending?: boolean;
 };
@@ -460,6 +461,7 @@ export function ActiveWorkout({
             sets={unit.exercise.sets}
             suggestion={unit.exercise.suggestion}
             lastSessionSets={unit.exercise.lastSessionSets}
+            weightPRs={unit.exercise.weightPRs}
             disabled={
               unit.exercise.id.startsWith("temp-") || busyIds.has(unit.exercise.id)
             }
@@ -500,6 +502,7 @@ export function ActiveWorkout({
                 sets={exercise.sets}
                 suggestion={exercise.suggestion}
                 lastSessionSets={exercise.lastSessionSets}
+                weightPRs={exercise.weightPRs}
                 disabled={exercise.id.startsWith("temp-") || busyIds.has(exercise.id)}
                 isOpen={index === openIndex}
                 onToggleOpen={() =>

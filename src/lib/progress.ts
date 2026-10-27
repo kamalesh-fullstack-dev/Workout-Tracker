@@ -63,6 +63,43 @@ export async function getLastSessionSets(
   }));
 }
 
+export type WeightRepPR = { weightKg: number; bestReps: number };
+
+/**
+ * Best reps achieved at each distinct weight previously lifted for this
+ * exercise — a true per-weight PR, not one blended "most reps ever" number
+ * that would treat 22 reps at a light weight as beating 12 reps at a much
+ * heavier one, which isn't a meaningful PR.
+ */
+export async function getWeightRepPRs(
+  userId: string,
+  exerciseId: string
+): Promise<WeightRepPR[]> {
+  const sets = await db.setEntry.findMany({
+    where: {
+      userId,
+      exerciseId,
+      isWarmup: false,
+      isDropSet: false,
+      isCompleted: true,
+    },
+    select: { weightKg: true, reps: true },
+  });
+
+  const bestByWeight = new Map<number, number>();
+  for (const s of sets) {
+    const weight = Number(s.weightKg);
+    const prevBest = bestByWeight.get(weight);
+    if (prevBest === undefined || s.reps > prevBest) {
+      bestByWeight.set(weight, s.reps);
+    }
+  }
+
+  return Array.from(bestByWeight.entries())
+    .map(([weightKg, bestReps]) => ({ weightKg, bestReps }))
+    .sort((a, b) => b.weightKg - a.weightKg);
+}
+
 export type ProgressPoint = {
   date: string;
   bestE1RM: number;

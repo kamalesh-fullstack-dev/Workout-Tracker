@@ -3,7 +3,7 @@ import { Repeat } from "lucide-react";
 import { requireUser } from "@/actions/auth";
 import { db } from "@/lib/db";
 import { fetchSuggestionForExercise, repeatWorkoutAction } from "@/actions/workouts";
-import { getLastSessionSets } from "@/lib/progress";
+import { getLastSessionSets, getWeightRepPRs } from "@/lib/progress";
 import { formatDuration } from "@/lib/dates";
 import { ActiveWorkout } from "@/components/workout/active-workout";
 import { DeleteWorkoutButton } from "@/components/workout/delete-workout-button";
@@ -85,17 +85,19 @@ export default async function WorkoutSessionPage({
 
   const exercises = await Promise.all(
     baseExercises.map(async (exercise) => {
-      const lastSessionSets = await getLastSessionSets(
-        user.id,
-        exercise.exerciseId,
-        sessionId
-      ).catch((err) => {
-        console.error("Failed to fetch last session sets for", exercise.exerciseId, err);
-        return [];
-      });
+      const [lastSessionSets, weightPRs] = await Promise.all([
+        getLastSessionSets(user.id, exercise.exerciseId, sessionId).catch((err) => {
+          console.error("Failed to fetch last session sets for", exercise.exerciseId, err);
+          return [];
+        }),
+        getWeightRepPRs(user.id, exercise.exerciseId).catch((err) => {
+          console.error("Failed to fetch weight PRs for", exercise.exerciseId, err);
+          return [];
+        }),
+      ]);
 
       if (exercise.sets.length > 0) {
-        return { ...exercise, suggestion: null, lastSessionSets };
+        return { ...exercise, suggestion: null, lastSessionSets, weightPRs };
       }
 
       try {
@@ -104,10 +106,10 @@ export default async function WorkoutSessionPage({
           exercise.exerciseId,
           routineTargetsByExerciseId.get(exercise.exerciseId)
         );
-        return { ...exercise, suggestion, lastSessionSets };
+        return { ...exercise, suggestion, lastSessionSets, weightPRs };
       } catch (err) {
         console.error("Failed to compute suggestion for", exercise.exerciseId, err);
-        return { ...exercise, suggestion: null, lastSessionSets };
+        return { ...exercise, suggestion: null, lastSessionSets, weightPRs };
       }
     })
   );

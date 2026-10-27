@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronDown, Flag, History, Pencil, Sparkles, Trash2, X } from "lucide-react";
+import { Check, ChevronDown, Flag, History, Pencil, Sparkles, Trash2, Trophy, X } from "lucide-react";
 import type { Suggestion } from "@/lib/suggestions";
-import type { LastSessionSet } from "@/lib/progress";
+import type { LastSessionSet, WeightRepPR } from "@/lib/progress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -158,6 +158,7 @@ export function ExerciseBlock({
   sets,
   suggestion,
   lastSessionSets,
+  weightPRs,
   disabled,
   isOpen,
   onToggleOpen,
@@ -170,6 +171,7 @@ export function ExerciseBlock({
   sets: SetItem[];
   suggestion?: Suggestion | null;
   lastSessionSets?: LastSessionSet[];
+  weightPRs?: WeightRepPR[];
   disabled?: boolean;
   isOpen: boolean;
   onToggleOpen: () => void;
@@ -205,6 +207,22 @@ export function ExerciseBlock({
   const [rpe, setRpe] = useState("");
   const [isWarmup, setIsWarmup] = useState(false);
   const [isDropSet, setIsDropSet] = useState(false);
+
+  // A true per-weight rep PR, looked up live as weight/reps are typed —
+  // not a single blended "most reps ever" number, since more reps at a
+  // lighter weight isn't actually a PR over fewer reps at a heavier one.
+  const enteredWeight = Number(weight);
+  const enteredReps = Number(reps);
+  const hasValidWeight = weight !== "" && !Number.isNaN(enteredWeight);
+  const hasValidReps = reps !== "" && Number.isFinite(enteredReps) && enteredReps > 0;
+  const bestAtWeight = hasValidWeight
+    ? weightPRs?.find((w) => w.weightKg === enteredWeight)
+    : undefined;
+  const wouldBeNewPR =
+    !isWarmup &&
+    hasValidWeight &&
+    hasValidReps &&
+    (bestAtWeight === undefined || enteredReps > bestAtWeight.bestReps);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -372,6 +390,30 @@ export function ExerciseBlock({
                 />
               </div>
             </div>
+
+            {hasValidWeight && !isWarmup && (
+              <div
+                className={`flex items-start gap-2 rounded-lg px-3 py-2 text-xs ${
+                  wouldBeNewPR
+                    ? "bg-primary/10 text-primary"
+                    : "bg-muted/50 text-muted-foreground"
+                }`}
+              >
+                <Trophy className="mt-0.5 size-3.5 shrink-0" />
+                {bestAtWeight ? (
+                  <span>
+                    <span className="font-medium">PR at {enteredWeight} kg: </span>
+                    {bestAtWeight.bestReps} rep{bestAtWeight.bestReps === 1 ? "" : "s"}
+                    {wouldBeNewPR && " · this would beat it!"}
+                  </span>
+                ) : (
+                  <span>
+                    <span className="font-medium">New weight: </span>
+                    no reps logged yet at {enteredWeight} kg — this will set the PR
+                  </span>
+                )}
+              </div>
+            )}
 
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-muted-foreground mr-0.5 text-xs">Weight</span>
