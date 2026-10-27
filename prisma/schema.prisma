@@ -97,6 +97,8 @@ model User {
   measurements    BodyMeasurement[]
   personalRecords PersonalRecord[]
   cheatMeals      CheatMeal[]
+  habits          Habit[]
+  habitSlips      HabitSlip[]
 }
 
 model Exercise {
@@ -278,5 +280,35 @@ model CheatMeal {
   createdAt DateTime @default(now())
 
   @@unique([userId, date, slot])
+  @@index([userId, date])
+}
+
+// A user-defined habit they're trying to stop (or stay clean of) — e.g.
+// "No smoking", "No social media after 10pm". Unlike CheatMeal's fixed
+// meal slots, habits are open-ended, so each gets its own name and streak.
+model Habit {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime @default(now())
+
+  slips HabitSlip[]
+
+  @@index([userId])
+}
+
+// Presence of a row for (habit, date) means that day was a slip for that
+// habit — same "absence means clean" convention as CheatMeal.
+model HabitSlip {
+  id      String   @id @default(cuid())
+  habitId String
+  habit   Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date    DateTime @db.Date
+  note    String?
+
+  @@unique([habitId, date])
   @@index([userId, date])
 }

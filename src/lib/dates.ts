@@ -1,3 +1,8 @@
+/** "YYYY-MM-DD" for today, UTC-based — the convention used for day-keyed streaks. */
+export function todayISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 /** A Date `days` ago from now. */
 export function daysAgo(days: number): Date {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000);

@@ -6,9 +6,11 @@ import { db } from "@/lib/db";
 import { formatHistoryDate, formatDuration } from "@/lib/dates";
 import { PR_TYPE_LABELS, type PRType } from "@/lib/pr-types";
 import { getCleanStreak, todayISO } from "@/lib/meals";
+import { getHabitsWithStreaks } from "@/lib/habits";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MealSlotToggles } from "@/components/meals/meal-slot-toggles";
+import { HabitList } from "@/components/habits/habit-list";
 
 function formatPRValue(type: PRType, value: number) {
   return type === "MAX_REPS" ? `${value} reps` : `${value} kg`;
@@ -41,12 +43,13 @@ export default async function DashboardPage() {
   });
 
   const today = todayISO();
-  const [streak, todayCheatMeals] = await Promise.all([
+  const [streak, todayCheatMeals, habits] = await Promise.all([
     getCleanStreak(user.id),
     db.cheatMeal.findMany({
       where: { userId: user.id, date: new Date(today) },
       select: { slot: true, note: true },
     }),
+    getHabitsWithStreaks(user.id),
   ]);
 
   return (
@@ -109,6 +112,19 @@ export default async function DashboardPage() {
           </Link>
         </div>
         <MealSlotToggles date={today} cheatMeals={todayCheatMeals} />
+      </Card>
+
+      <Card className="gap-3 p-4">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-sm font-medium">Habit Tracker</h2>
+          <Link
+            href="/habits"
+            className="text-muted-foreground text-xs underline underline-offset-4"
+          >
+            View all
+          </Link>
+        </div>
+        <HabitList habits={habits} />
       </Card>
 
       {recentPRs.length > 0 && (

@@ -1,9 +1,7 @@
 import { db } from "@/lib/db";
+import { todayISO } from "@/lib/dates";
 
-/** "YYYY-MM-DD" for today, UTC-based — same convention used for body metrics. */
-export function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+export { todayISO };
 
 /**
  * Consecutive *completed* clean days, ending yesterday — today is still in
